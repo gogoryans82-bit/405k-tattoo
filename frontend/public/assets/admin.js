@@ -1,6 +1,5 @@
 // frontend/public/assets/admin.js
 
-// ── Helpers ─────────────────────────────────────────────────
 const $ = (s, r = document) => r.querySelector(s);
 
 function el(tag, attrs = {}, ...children) {
@@ -18,9 +17,8 @@ function el(tag, attrs = {}, ...children) {
   return n;
 }
 
-const escHtml = s => String(s ?? "").replace(/[&<>"']/g, c =>
+const escAttr = (s) => String(s ?? "").replace(/[&<>"']/g, c =>
   ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
-const escAttr = escHtml;
 
 function toLocalDT(iso) {
   if (!iso) return "";
@@ -52,7 +50,6 @@ async function api(path, { method = "GET", body } = {}) {
   return res.json();
 }
 
-// ── View switching ──────────────────────────────────────────
 function showLogin() {
   $("#login-view").hidden = false;
   $("#main-view").hidden = true;
@@ -61,7 +58,11 @@ function showLogin() {
 async function showMain() {
   $("#login-view").hidden = true;
   $("#main-view").hidden = false;
-  await Promise.all([loadBookings(), loadPaymentMethods()]);
+  await Promise.all([
+    loadBookings().catch(() => {}),
+    loadPaymentMethods().catch(() => {}),
+    loadArtists().catch(() => {}),
+  ]);
 }
 
 // ── Login ───────────────────────────────────────────────────
@@ -101,13 +102,7 @@ document.querySelectorAll(".tabs button").forEach(btn => {
   });
 });
 
-// ── Booking list ────────────────────────────────────────────
-let _artists = [];
-async function getArtists() {
-  if (!_artists.length) _artists = await api("/artists");
-  return _artists;
-}
-
+// ── Bookings ────────────────────────────────────────────────
 async function loadBookings() {
   const q = $("#bk-search").value.trim();
   const status = $("#bk-status").value;
@@ -146,7 +141,7 @@ $("#drawer-backdrop").addEventListener("click", closeDrawer);
 
 async function openBooking(id) {
   const b = await api(`/bookings/${id}`);
-  const artists = await getArtists();
+  const artists = await api("/artists");
   const methods = await api("/payment-methods");
 
   $("#drawer-title").textContent = `${b.ref} · ${b.name}`;
@@ -156,13 +151,11 @@ async function openBooking(id) {
   const body = $("#drawer-body");
   body.innerHTML = "";
 
-  // Status
   const statusSelect = el("select");
   ["pending","approved","scheduled","completed","cancelled"].forEach(s => {
     statusSelect.append(el("option", { value: s, selected: s === b.status ? "selected" : null }, s));
   });
 
-  // Artist
   const artistSelect = el("select");
   artistSelect.append(el("option", { value: "" }, "— none —"));
   for (const a of artists) {
@@ -171,7 +164,6 @@ async function openBooking(id) {
       a.name));
   }
 
-  // Deposit
   const amountInput = el("input", {
     type: "number", min: "0", step: "1",
     value: b.deposit_amount ?? "",
@@ -184,13 +176,11 @@ async function openBooking(id) {
       m.label + (m.enabled ? "" : " (disabled)")));
   }
 
-  // Appointment
   const dtInput = el("input", {
     type: "datetime-local",
     value: b.appointment_at ? toLocalDT(b.appointment_at) : "",
   });
 
-  // Notes
   const notesInput = el("textarea", { rows: "3" }, b.notes || "");
 
   body.append(
@@ -202,19 +192,12 @@ async function openBooking(id) {
     el("div", { class: "field" }, el("label", {}, "Internal notes"), notesInput),
   );
 
-  // ── Consultation block ────────────────────────────────────
-  const consultationRequired = el("input", {
-    type: "checkbox", style: "width:auto;",
-    checked: b.consultation_required ? "checked" : null,
-  });
-  const consultationDone = el("input", {
-    type: "checkbox", style: "width:auto;",
-    checked: b.consultation_done ? "checked" : null,
-  });
-  const consultationAt = el("input", {
-    type: "datetime-local",
-    value: b.consultation_at ? toLocalDT(b.consultation_at) : "",
-  });
+  const consultationRequired = el("input", { type: "checkbox", style: "width:auto;",
+    checked: b.consultation_required ? "checked" : null });
+  const consultationDone = el("input", { type: "checkbox", style: "width:auto;",
+    checked: b.consultation_done ? "checked" : null });
+  const consultationAt = el("input", { type: "datetime-local",
+    value: b.consultation_at ? toLocalDT(b.consultation_at) : "" });
   const consultationArtist = el("select");
   consultationArtist.append(el("option", { value: "" }, "— none —"));
   for (const a of artists) {
@@ -224,24 +207,21 @@ async function openBooking(id) {
   }
   const consultationNotes = el("textarea", { rows: "2" }, b.consultation_notes || "");
 
-  const consultationSection = el("div", {
+  body.appendChild(el("div", {
     style: "background:#fafafa;border:1px solid #eee;padding:14px;border-radius:4px;margin-top:12px;",
   },
     el("div", { style: "font-size:.72rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#666;margin-bottom:12px;" }, "Consultation"),
-    el("label", { style: "display:flex;align-items:center;gap:10px;text-transform:none;letter-spacing:0;font-size:.95rem;color:#111;margin-bottom:10px;" },
+    el("label", { style: "display:flex;align-items:center;gap:10px;font-size:.95rem;color:#111;margin-bottom:10px;" },
       consultationRequired, "Require consultation"),
     el("div", { class: "field" }, el("label", {}, "Date & time"), consultationAt),
     el("div", { class: "field" }, el("label", {}, "With artist"), consultationArtist),
-    el("label", { style: "display:flex;align-items:center;gap:10px;text-transform:none;letter-spacing:0;font-size:.95rem;color:#111;margin:10px 0;" },
+    el("label", { style: "display:flex;align-items:center;gap:10px;font-size:.95rem;color:#111;margin:10px 0;" },
       consultationDone, "Mark consultation complete"),
     el("div", { class: "field" }, el("label", {}, "Consultation notes (client-visible)"), consultationNotes),
-  );
-  body.appendChild(consultationSection);
+  ));
 
-  // Actions
   const saveBtn = el("button", {}, "Save changes");
-  const actions = el("div", { class: "actions" }, saveBtn);
-  body.appendChild(actions);
+  body.appendChild(el("div", { class: "actions" }, saveBtn));
 
   saveBtn.addEventListener("click", async () => {
     saveBtn.disabled = true;
@@ -275,7 +255,7 @@ async function openBooking(id) {
   });
 }
 
-// ── Payment methods panel ───────────────────────────────────
+// ── Payment methods ─────────────────────────────────────────
 async function loadPaymentMethods() {
   const list = await api("/payment-methods");
   const wrap = $("#pm-list");
@@ -285,13 +265,13 @@ async function loadPaymentMethods() {
     const row = el("div", { class: "pm-row" },
       el("label", { class: "pm-toggle" },
         el("input", { type: "checkbox", "data-f": "enabled", checked: m.enabled ? "checked" : null })),
-      el("input", { class: "pm-input", "data-f": "label",        value: m.label, placeholder: "Label" }),
-      el("input", { class: "pm-input pm-key", "data-f": "key",   value: m.key,   placeholder: "key" }),
-      el("input", { class: "pm-input", "data-f": "handle",       value: m.handle || "", placeholder: "@handle / $tag / phone" }),
+      el("input", { class: "pm-input", "data-f": "label", value: m.label, placeholder: "Label" }),
+      el("input", { class: "pm-input pm-key", "data-f": "key", value: m.key, placeholder: "key" }),
+      el("input", { class: "pm-input", "data-f": "handle", value: m.handle || "", placeholder: "@handle" }),
       el("input", { class: "pm-input pm-num", "data-f": "min_deposit", type: "number", value: m.min_deposit ?? "", placeholder: "min $" }),
       el("input", { class: "pm-input pm-num", "data-f": "max_deposit", type: "number", value: m.max_deposit ?? "", placeholder: "max $" }),
       el("button", { class: "pm-save" }, "Save"),
-      el("button", { class: "pm-del", title: "Delete" }, "✕"),
+      el("button", { class: "pm-del" }, "✕"),
     );
 
     row.querySelector(".pm-save").addEventListener("click", async () => {
@@ -311,7 +291,7 @@ async function loadPaymentMethods() {
     });
 
     row.querySelector(".pm-del").addEventListener("click", async () => {
-      if (!confirm(`Delete "${m.label}"? Bookings already using it keep the string.`)) return;
+      if (!confirm(`Delete "${m.label}"?`)) return;
       try {
         await api(`/payment-methods/${m.id}`, { method: "DELETE" });
         loadPaymentMethods();
@@ -321,7 +301,6 @@ async function loadPaymentMethods() {
     wrap.appendChild(row);
   }
 
-  // Global minimum
   const { min_deposit_default } = await api("/settings/min-deposit");
   $("#pm-global-min").value = min_deposit_default;
 }
@@ -329,10 +308,7 @@ async function loadPaymentMethods() {
 $("#pm-global-min-save").addEventListener("click", async () => {
   const v = Number($("#pm-global-min").value);
   try {
-    await api("/settings/min-deposit", {
-      method: "PUT",
-      body: { min_deposit_default: v },
-    });
+    await api("/settings/min-deposit", { method: "PUT", body: { min_deposit_default: v } });
     toast("Minimum deposit updated");
   } catch (err) { alert(err.message); }
 });
@@ -349,11 +325,78 @@ $("#pm-add").addEventListener("click", async () => {
   } catch (err) { alert(err.message); }
 });
 
+// ── Artists ─────────────────────────────────────────────────
+async function loadArtists() {
+  const list = await api("/artists");
+  const wrap = $("#ar-list");
+  if (!wrap) return;
+  wrap.innerHTML = "";
+
+  for (const a of list) {
+    const row = el("div", { class: "pm-row" });
+    row.style.gridTemplateColumns = "44px 1.2fr 1fr 1fr 1.6fr 90px auto auto";
+    row.innerHTML = `
+      <label class="pm-toggle"><input type="checkbox" data-f="active" ${a.active ? "checked" : ""}></label>
+      <input class="pm-input" data-f="name"          value="${escAttr(a.name || "")}"          placeholder="Name">
+      <input class="pm-input" data-f="specialty"     value="${escAttr(a.specialty || "")}"     placeholder="Specialty">
+      <input class="pm-input pm-key" data-f="slug"   value="${escAttr(a.slug || "")}"          placeholder="slug">
+      <input class="pm-input" data-f="image_url"     value="${escAttr(a.image_url || "")}"     placeholder="Image URL">
+      <input class="pm-input pm-num" data-f="sort_order" type="number" value="${a.sort_order ?? 0}">
+      <button class="pm-save">Save</button>
+      <button class="pm-del">✕</button>
+    `;
+    row.querySelector(".pm-save").onclick = async () => {
+      const body = {};
+      for (const inp of row.querySelectorAll("[data-f]")) {
+        const f = inp.dataset.f;
+        if (inp.type === "checkbox") body[f] = inp.checked ? 1 : 0;
+        else if (f === "sort_order") body[f] = Number(inp.value) || 0;
+        else body[f] = inp.value || null;
+      }
+      try {
+        await api(`/artists/${a.id}`, { method: "PATCH", body });
+        toast("Saved");
+        loadArtists();
+      } catch (err) { alert(err.message); }
+    };
+    row.querySelector(".pm-del").onclick = async () => {
+      if (!confirm(`Hide “${a.name}”?`)) return;
+      try {
+        await api(`/artists/${a.id}`, { method: "DELETE" });
+        loadArtists();
+      } catch (err) { alert(err.message); }
+    };
+    wrap.appendChild(row);
+  }
+}
+
+$("#ar-add")?.addEventListener("click", async () => {
+  const g = id => document.getElementById(id)?.value.trim() || null;
+  const body = {
+    name: g("ar-new-name"),
+    slug: g("ar-new-slug"),
+    specialty: g("ar-new-specialty"),
+    image_url: g("ar-new-image"),
+    portfolio_url: g("ar-new-portfolio"),
+    instagram: g("ar-new-instagram"),
+  };
+  if (!body.name) return alert("Name is required");
+  try {
+    await api("/artists", { method: "POST", body });
+    for (const id of ["ar-new-name","ar-new-slug","ar-new-specialty","ar-new-image","ar-new-portfolio","ar-new-instagram"]) {
+      const el2 = document.getElementById(id);
+      if (el2) el2.value = "";
+    }
+    loadArtists();
+    toast("Artist added");
+  } catch (err) { alert(err.message); }
+});
+
 // ── Boot ────────────────────────────────────────────────────
 (async () => {
   try {
-    await fetch("/api/admin/me", { credentials: "same-origin" })
-      .then(r => { if (!r.ok) throw new Error(); });
+    const r = await fetch("/api/admin/me", { credentials: "same-origin" });
+    if (!r.ok) throw new Error();
     await showMain();
   } catch { showLogin(); }
 })();
