@@ -1,107 +1,180 @@
+// backend/routes/public.js
 import express from "express";
-import { z } from "zod";
-
-import { db, nextBookingRef, listArtists } from "../db.js";
-import * as mail from "../mailer.js";
-import { bookingLimiter, uploadLimiter } from "../middleware/rateLimit.js";
-import { uploadReferences } from "../middleware/uploads.js";
+import { pool } from "../db.js";
+import { mail, config } from "../mailer.js";
+import {
+  listPaymentMethods,
+  getPaymentMethodByKey,
+  getDefaultMinDeposit,
+} from "../paymentMethods.js";
 
 const router = express.Router();
 
-// ── Public: list active artists ────────────────────────────────
-router.get("/artists", (_req, res) => {
-  res.json(listArtists({ activeOnly: true }));
+// ── Public list of enabled methods ──────────────────────────
+router.get("/payment-methods", async (_req, res) => {
+  const rows = await listPaymentMethods({ onlyEnabled: true });
+  res.set("Cache-Control", "no-store, max-age=0");
+  res.json(rows.map((m) => ({
+    key:          m.key,
+    label:        m.label,
+    handle:       m.handle,
+    instructions: m.instructions,
+    min_deposit:  m.min_deposit,
+    max_deposit:  m.max_deposit,
+  })));
 });
 
-// ── Public: upload reference images ────────────────────────────
-router.post(
-  "/uploads",
-  uploadLimiter,
-  uploadReferences.array("files", 5),
-  (req, res) => {
-    const urls = (req.files || []).map(f => `/uploads/${f.filename}`);
-    res.json({ urls });
-  }
-);
-
-// ── Public: submit booking ─────────────────────────────────────
-const BookingSchema = z.object({
-  name:        z.string().min(2).max(120),
-  email:       z.string().email(),
-  phone:       z.string().min(7).max(40),
-  artist_id:   z.coerce.number().int().positive().nullable().optional(),
-  artist_preference: z.string().max(120).optional().default(""),
-  placement:   z.string().min(1).max(120),
-  size:        z.string().min(1).max(60),
-  color_mode:  z.enum(["black", "color"]),
-  description: z.string().max(4000).optional().default(""),
-  preferred_dates: z.string().max(400).optional().default(""),
-  reference_urls:  z.array(z.string().max(300)).max(5).optional().default([]),
-});
-
-router.post("/bookings", bookingLimiter, async (req, res) => {
-  const parsed = BookingSchema.safeParse(req.body);
-  if (!parsed.success) {
-    return res.status(400).json({
-      error: "Invalid submission",
-      details: parsed.error.flatten().fieldErrors,
-    });
-  }
-  const data = parsed.data;
-
-  let artist = null;
-  if (data.artist_id) {
-    artist = db.prepare(
-      "SELECT id, name FROM artists WHERE id = ? AND active = 1"
-    ).get(data.artist_id);
-  }
-
-  const ref = nextBookingRef();
-
-  const info = db.prepare(`
-    INSERT INTO bookings
-      (ref, name, email, phone, artist_id, artist_preference,
-       placement, size, color_mode, description, preferred_dates,
-       reference_urls, status)
-    VALUES (?,?,?,?,?,?,?,?,?,?,?,?, 'pending')
-  `).run(
-    ref, data.name, data.email, data.phone,
-    artist?.id ?? null,
-    data.artist_preference || artist?.name || "",
-    data.placement, data.size, data.color_mode,
-    data.description, data.preferred_dates,
-    JSON.stringify(data.reference_urls || [])
-  );
-
-  const booking = db.prepare("SELECT * FROM bookings WHERE id = ?")
-                    .get(info.lastInsertRowid);
-  booking.reference_urls = JSON.parse(booking.reference_urls || "[]");
-
-  // Fire-and-forget emails
-  mail.send({ to: mail.ADMIN,        ...mail.tplAdminNewBooking(booking) });
-  mail.send({ to: booking.email,     ...mail.tplClientReceived(booking) });
-
-  res.status(201).json({
-    ok: true,
-    ref: booking.ref,
-    message: "Booking received. Check your email for next steps.",
+router.get("/deposit-info", async (_req, res) => {
+  const enabled = await listPaymentMethods({ onlyEnabled: true });
+  res.set("Cache-Control", "no-store, max-age=0");
+  res.json({
+    min_deposit_default: await getDefaultMinDeposit(),
+    any_method_enabled:  enabled.length > 0,
   });
 });
 
-// ── Public: lookup by ref + email ──────────────────────────────
-router.get("/bookings/:ref", (req, res) => {
-  const { ref } = req.params;
-  const email = String(req.query.email || "").toLowerCase();
-  if (!email) return res.status(400).json({ error: "email query required" });
+// ── Create booking ──────────────────────────────────────────
+router.post("/bookings", async (req, res, next) => {
+  try {
+    const b = req.body || {};
 
-  const b = db.prepare(`
-    SELECT ref, name, status, deposit_amount, deposit_method,
-           deposit_paid, appointment_at, artist_preference, created_at
-    FROM bookings WHERE ref = ? AND lower(email) = ?
-  `).get(ref, email);
+    // Reject a disabled method at submit-time (a stale form may still carry it)
+    if (b.deposit_method) {
+      const m = await getPaymentMethodByKey(b.deposit_method);
+      if (!m || !m.enabled) {
+        return res.status(400).json({
+          error: "That payment method is no longer available. Please pick another.",
+        });
+      }
+    }
 
-  if (!b) return res.status(404).json({ error: "Not found" });
-  res.json(b);
+    // Generate a reference
+    const year = new Date().getFullYear();
+    const { rows: seqRows } = await pool.query(
+      `SELECT COUNT(*)::int AS n FROM bookings WHERE EXTRACT(YEAR FROM created_at) = $1`,
+      [year]
+    );
+    const ref = `405-${year}-${String(seqRows[0].n + 1).padStart(4, "0")}`;
+
+    const { rows } = await pool.query(`
+      INSERT INTO bookings
+        (ref, name, email, phone, placement, size, color_mode, description,
+         artist_preference, status)
+      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,'pending')
+      RETURNING *
+    `, [
+      ref, b.name, b.email, b.phone || null,
+      b.placement || null, b.size || null, b.color_mode || null,
+      b.description || null, b.artist_preference || null,
+    ]);
+
+    const created = rows[0];
+
+    // Notify client + admin
+    mail.send({ to: created.email, ...mail.tplClientReceived(created) });
+    if (process.env.ADMIN_EMAIL) {
+      mail.send({ to: process.env.ADMIN_EMAIL, ...mail.tplAdminNewBooking(created) });
+    }
+
+    res.json({ ok: true, ref: created.ref });
+  } catch (err) { next(err); }
+});
+
+// ── Upload receipt (client-side, base64 or URL) ─────────────
+router.post("/bookings/:ref/receipt", async (req, res, next) => {
+  try {
+    const { ref } = req.params;
+    const email = String(req.query.email || "").toLowerCase();
+    const { file_url } = req.body || {};
+    if (!email || !file_url) {
+      return res.status(400).json({ error: "email and file_url required" });
+    }
+
+    const { rows: bk } = await pool.query(
+      `SELECT * FROM bookings WHERE ref = $1 AND lower(email) = $2`,
+      [ref, email]
+    );
+    const booking = bk[0];
+    if (!booking) return res.status(404).json({ error: "Booking not found" });
+
+    await pool.query(`
+      INSERT INTO receipts (booking_id, file_url, status)
+      VALUES ($1, $2, 'pending')
+    `, [booking.id, file_url]);
+
+    mail.send({ to: booking.email, ...mail.tplClientReceiptReceived(booking) });
+    if (process.env.ADMIN_EMAIL) {
+      mail.send({ to: process.env.ADMIN_EMAIL, ...mail.tplAdminReceiptUploaded(booking) });
+    }
+
+    res.json({ ok: true });
+  } catch (err) { next(err); }
+});
+
+// ── Full status ─────────────────────────────────────────────
+router.get("/bookings/:ref/status", async (req, res, next) => {
+  try {
+    const { ref } = req.params;
+    const email = String(req.query.email || "").toLowerCase();
+    if (!email) return res.status(400).json({ error: "email query required" });
+
+    const { rows } = await pool.query(`
+      SELECT b.*,
+             a.name  AS artist_name,
+             ca.name AS consultation_artist_name
+      FROM bookings b
+      LEFT JOIN artists a  ON a.id  = b.artist_id
+      LEFT JOIN artists ca ON ca.id = b.consultation_artist_id
+      WHERE b.ref = $1 AND lower(b.email) = $2
+    `, [ref, email]);
+
+    const b = rows[0];
+    if (!b) return res.status(404).json({ error: "Booking not found" });
+
+    // Receipt (latest approved, else latest pending)
+    const { rows: rrows } = await pool.query(`
+      SELECT file_url, status, submitted_at
+      FROM receipts WHERE booking_id = $1
+      ORDER BY (status='approved') DESC, submitted_at DESC
+      LIMIT 1
+    `, [b.id]);
+
+    // Resolve the method label regardless of enabled state (historic)
+    const chosenMethod = b.deposit_method
+      ? await getPaymentMethodByKey(b.deposit_method)
+      : null;
+
+    res.set("Cache-Control", "no-store, max-age=0");
+    res.json({
+      ref: b.ref,
+      name: b.name,
+      status: b.status,
+      placement: b.placement,
+      size: b.size,
+      color_mode: b.color_mode,
+      description: b.description,
+      artist_name: b.artist_name,
+      artist_preference: b.artist_preference,
+
+      deposit_amount: b.deposit_amount != null ? Number(b.deposit_amount) : null,
+      deposit_method: b.deposit_method,
+      deposit_method_label: chosenMethod?.label || b.deposit_method || null,
+      deposit_paid: b.deposit_paid === 1,
+      deposit_paid_at: b.deposit_paid_at,
+
+      appointment_at: b.appointment_at,
+
+      consultation_required: b.consultation_required === 1,
+      consultation_done: b.consultation_done === 1,
+      consultation_at: b.consultation_at,
+      consultation_artist_name: b.consultation_artist_name,
+      consultation_notes: b.consultation_notes,
+
+      receipt_url: rrows[0]?.file_url || null,
+      receipt_status: rrows[0]?.status || null,
+      created_at: b.created_at,
+    });
+  } catch (err) { next(err); }
 });
 
 export default router;
