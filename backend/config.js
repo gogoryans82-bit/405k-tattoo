@@ -1,5 +1,8 @@
 export const config = {
   // ... existing fields ...
+  database: {
+    connectionString: process.env.DATABASE_URL,
+  }
 
   // ── Mail ────────────────────────────────────────────────────
   mailProvider: (process.env.MAIL_PROVIDER || "smtp").toLowerCase(),
