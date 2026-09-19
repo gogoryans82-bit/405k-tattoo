@@ -4,317 +4,98 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Our Artists — 405INK Tattoo Studio</title>
-<meta name="description" content="Meet the artists of 405INK Tattoo Studio in Oklahoma City. Custom tattoos, fine line, realism, color, and more.">
+<meta name="description" content="Meet the artists of 405INK Tattoo Studio in Oklahoma City.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Josefin+Sans:wght@400;500;700&family=Nunito+Sans:wght@400;700&display=swap" rel="stylesheet">
 <style>
-  /* ─────────────────────────────────────────────────────────
-     Variables & base
-  ─────────────────────────────────────────────────────────── */
   :root{
-    --black:#000;
-    --white:#fff;
-    --ink:#111;
-    --muted:#666;
-    --bg:#fff;
-    --tile-radius:20px;
-    --max-width:1500px;
-    --side-gutter:3vw;
-    --col-gap:24px;
+    --black:#000; --white:#fff; --ink:#111; --muted:#666; --bg:#fff;
+    --tile-radius:20px; --max-width:1500px; --side-gutter:3vw;
     --font-head:'Josefin Sans',system-ui,sans-serif;
     --font-body:'Nunito Sans',system-ui,sans-serif;
   }
   *{box-sizing:border-box;}
   html,body{margin:0;padding:0;}
-  body{
-    background:var(--bg);
-    color:var(--ink);
-    font-family:var(--font-body);
-    line-height:1.55;
-    -webkit-font-smoothing:antialiased;
-  }
+  body{background:var(--bg);color:var(--ink);font-family:var(--font-body);line-height:1.55;-webkit-font-smoothing:antialiased;}
   a{color:inherit;text-decoration:none;}
   img{max-width:100%;display:block;}
 
-  /* ─────────────────────────────────────────────────────────
-     Header — black bar, logo left, nav right
-  ─────────────────────────────────────────────────────────── */
-  .site-header{
-    background:var(--black);
-    color:var(--white);
-    position:sticky;
-    top:0;
-    z-index:100;
-  }
-  .header-inner{
-    max-width:var(--max-width);
-    margin:0 auto;
-    padding:18px var(--side-gutter);
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    gap:24px;
-  }
-  .brand{
-    display:flex;
-    align-items:center;
-    gap:14px;
-    font-family:var(--font-head);
-    font-weight:700;
-    font-size:1.15rem;
-    letter-spacing:.18em;
-    text-transform:uppercase;
-    color:var(--white);
-  }
-  .brand img{
-    height:44px;
-    width:auto;
-    border-radius:4px;
-  }
+  .site-header{background:var(--black);color:var(--white);position:sticky;top:0;z-index:100;}
+  .header-inner{max-width:var(--max-width);margin:0 auto;padding:18px var(--side-gutter);display:flex;align-items:center;justify-content:space-between;gap:24px;}
+  .brand{display:flex;align-items:center;gap:14px;font-family:var(--font-head);font-weight:700;font-size:1.15rem;letter-spacing:.18em;text-transform:uppercase;color:var(--white);}
+  .brand img{height:44px;width:auto;border-radius:4px;}
   .brand-text{display:none;}
   @media (min-width:640px){ .brand-text{display:inline;} }
-
-  .nav{
-    display:flex;
-    align-items:center;
-    gap:26px;
-    font-family:var(--font-head);
-    font-size:.78rem;
-    letter-spacing:.14em;
-    text-transform:uppercase;
-  }
+  .nav{display:flex;align-items:center;gap:26px;font-family:var(--font-head);font-size:.78rem;letter-spacing:.14em;text-transform:uppercase;}
   .nav a{opacity:.85;transition:opacity .15s;}
   .nav a:hover{opacity:1;}
   .nav a.active{opacity:1;border-bottom:1px solid var(--white);padding-bottom:2px;}
-
-  /* Mobile burger */
-  .burger{
-    display:none;
-    background:none;
-    border:none;
-    color:var(--white);
-    cursor:pointer;
-    padding:8px;
-  }
-  .burger span{
-    display:block;
-    width:22px;
-    height:1px;
-    background:currentColor;
-    margin:5px 0;
-  }
+  .burger{display:none;background:none;border:none;color:var(--white);cursor:pointer;padding:8px;}
+  .burger span{display:block;width:22px;height:1px;background:currentColor;margin:5px 0;}
   @media (max-width:860px){
-    .nav{
-      position:fixed;
-      top:80px;left:0;right:0;
-      background:#000;
-      flex-direction:column;
-      align-items:flex-start;
-      gap:0;
-      max-height:0;
-      overflow:hidden;
-      transition:max-height .25s ease;
-      padding:0 var(--side-gutter);
-    }
+    .nav{position:fixed;top:80px;left:0;right:0;background:#000;flex-direction:column;align-items:flex-start;gap:0;max-height:0;overflow:hidden;transition:max-height .25s ease;padding:0 var(--side-gutter);}
     .nav.open{max-height:400px;padding:16px var(--side-gutter) 24px;}
     .nav a{padding:12px 0;width:100%;border-bottom:1px solid rgba(255,255,255,.08);}
     .nav a.active{border-bottom:1px solid rgba(255,255,255,.08);}
     .burger{display:block;}
   }
 
-  /* ─────────────────────────────────────────────────────────
-     Page title (small, under header)
-  ─────────────────────────────────────────────────────────── */
-  .page-head{
-    max-width:var(--max-width);
-    margin:0 auto;
-    padding:48px var(--side-gutter) 8px;
-    text-align:center;
-  }
-  .page-head h1{
-    font-family:var(--font-head);
-    font-size:clamp(1.6rem,3.4vw,2.4rem);
-    letter-spacing:.12em;
-    text-transform:uppercase;
-    margin:0;
-    font-weight:700;
-  }
-  .page-head p{
-    color:var(--muted);
-    margin:10px auto 0;
-    max-width:520px;
-    font-size:.95rem;
-  }
+  .page-head{max-width:var(--max-width);margin:0 auto;padding:48px var(--side-gutter) 8px;text-align:center;}
+  .page-head h1{font-family:var(--font-head);font-size:clamp(1.6rem,3.4vw,2.4rem);letter-spacing:.12em;text-transform:uppercase;margin:0;font-weight:700;}
+  .page-head p{color:var(--muted);margin:10px auto 0;max-width:520px;font-size:.95rem;}
 
-  /* ─────────────────────────────────────────────────────────
-     Artist grid — 3 staggered columns
-  ─────────────────────────────────────────────────────────── */
-  .artists-wrap{
-    max-width:var(--max-width);
-    margin:0 auto;
-    padding:48px var(--side-gutter) 80px;
-  }
-  .artists-grid{
-    display:grid;
-    grid-template-columns:repeat(3, 1fr);
-    gap:var(--col-gap) 28px;
-  }
+  .artists-wrap{max-width:var(--max-width);margin:0 auto;padding:48px var(--side-gutter) 80px;}
+  .artists-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px 28px;}
+  .artists-grid > .artist-card:nth-child(3n+1){margin-top:0;}
+  .artists-grid > .artist-card:nth-child(3n+2){margin-top:60px;}
+  .artists-grid > .artist-card:nth-child(3n+3){margin-top:0;}
 
-  /* Staggered vertical offsets to mirror the reference editorial look */
-  .artists-grid > .artist-card:nth-child(3n+1){ margin-top:0; }
-  .artists-grid > .artist-card:nth-child(3n+2){ margin-top:60px; }
-  .artists-grid > .artist-card:nth-child(3n+3){ margin-top:0; }
+  .artist-card{display:flex;flex-direction:column;align-items:center;}
+  .artist-tile{width:100%;aspect-ratio:2/3;border-radius:var(--tile-radius);overflow:hidden;background:#f0f0f0;position:relative;transition:transform .35s ease, box-shadow .35s ease;}
+  .artist-card:hover .artist-tile{transform:translateY(-4px);box-shadow:0 18px 40px rgba(0,0,0,.12);}
+  .artist-tile img{width:100%;height:100%;object-fit:cover;transition:transform .5s ease;}
+  .artist-card:hover .artist-tile img{transform:scale(1.03);}
 
-  .artist-card{
-    display:flex;
-    flex-direction:column;
-    align-items:center;
-  }
-  .artist-tile{
-    width:100%;
-    aspect-ratio:2 / 3;
-    border-radius:var(--tile-radius);
-    overflow:hidden;
-    background:#f0f0f0;
-    position:relative;
-    transition:transform .35s ease, box-shadow .35s ease;
-  }
-  .artist-card:hover .artist-tile{
-    transform:translateY(-4px);
-    box-shadow:0 18px 40px rgba(0,0,0,.12);
-  }
-  .artist-tile img{
-    width:100%;
-    height:100%;
-    object-fit:cover;
-    transition:transform .5s ease;
-  }
-  .artist-card:hover .artist-tile img{
-    transform:scale(1.03);
-  }
-
-  /* Name button — small black pill under the tile, matching the reference */
-  .artist-name{
-    display:inline-block;
-    margin-top:14px;
-    padding:10px 26px;
-    background:var(--black);
-    color:var(--white);
-    border-radius:999px;
-    font-family:var(--font-head);
-    font-size:.72rem;
-    letter-spacing:.18em;
-    text-transform:uppercase;
-    font-weight:700;
-    transition:opacity .15s, transform .15s;
-  }
+  .artist-name{display:inline-block;margin-top:14px;padding:10px 26px;background:var(--black);color:var(--white);border-radius:999px;font-family:var(--font-head);font-size:.72rem;letter-spacing:.18em;text-transform:uppercase;font-weight:700;transition:opacity .15s, transform .15s;}
   .artist-name:hover{opacity:.85;transform:translateY(-1px);}
 
-  /* Mobile: single column */
   @media (max-width:720px){
     .artists-grid{grid-template-columns:1fr;}
     .artists-grid > .artist-card{margin-top:0 !important;}
-    .artist-tile{aspect-ratio:3 / 4;}
+    .artist-tile{aspect-ratio:3/4;}
   }
-  /* Tablet: two columns */
   @media (min-width:721px) and (max-width:1024px){
     .artists-grid{grid-template-columns:repeat(2,1fr);}
     .artists-grid > .artist-card:nth-child(2n+2){margin-top:40px;}
     .artists-grid > .artist-card:nth-child(2n+1){margin-top:0;}
   }
 
-  /* Empty state */
-  .empty{
-    grid-column:1/-1;
-    text-align:center;
-    color:var(--muted);
-    padding:60px 20px;
-    font-size:1rem;
-  }
+  .empty{grid-column:1/-1;text-align:center;color:var(--muted);padding:60px 20px;font-size:1rem;}
 
-  /* ─────────────────────────────────────────────────────────
-     Footer
-  ─────────────────────────────────────────────────────────── */
-  .site-footer{
-    background:var(--black);
-    color:var(--white);
-    padding:60px var(--side-gutter) 32px;
-    margin-top:60px;
-  }
-  .footer-inner{
-    max-width:var(--max-width);
-    margin:0 auto;
-    display:grid;
-    grid-template-columns:2fr 1fr;
-    gap:40px;
-    align-items:start;
-  }
-  @media (max-width:720px){
-    .footer-inner{grid-template-columns:1fr;gap:24px;}
-  }
-  .footer-inner address{
-    font-style:normal;
-    font-family:var(--font-body);
-    line-height:1.7;
-    font-size:.95rem;
-  }
-  .footer-inner address a{opacity:.9;}
-  .footer-inner address a:hover{opacity:1;}
-  .footer-hours{
-    font-family:var(--font-head);
-    font-size:.85rem;
-    letter-spacing:.1em;
-    text-transform:uppercase;
-    line-height:1.7;
-  }
-  .footer-social{
-    margin-top:24px;
-    display:flex;
-    gap:16px;
-  }
-  .footer-social a{
-    display:inline-flex;
-    width:32px;height:32px;
-    align-items:center;justify-content:center;
-    border:1px solid rgba(255,255,255,.35);
-    border-radius:50%;
-    font-size:.8rem;
-    transition:background .15s;
-  }
+  .site-footer{background:var(--black);color:var(--white);padding:60px var(--side-gutter) 32px;margin-top:60px;}
+  .footer-inner{max-width:var(--max-width);margin:0 auto;display:grid;grid-template-columns:2fr 1fr;gap:40px;align-items:start;}
+  @media (max-width:720px){ .footer-inner{grid-template-columns:1fr;gap:24px;} }
+  .footer-inner address{font-style:normal;line-height:1.7;font-size:.95rem;}
+  .footer-hours{font-family:var(--font-head);font-size:.85rem;letter-spacing:.1em;text-transform:uppercase;line-height:1.7;}
+  .footer-social{margin-top:24px;display:flex;gap:16px;}
+  .footer-social a{display:inline-flex;width:32px;height:32px;align-items:center;justify-content:center;border:1px solid rgba(255,255,255,.35);border-radius:50%;font-size:.8rem;transition:background .15s;}
   .footer-social a:hover{background:rgba(255,255,255,.12);}
-  .footer-bottom{
-    max-width:var(--max-width);
-    margin:40px auto 0;
-    padding-top:20px;
-    border-top:1px solid rgba(255,255,255,.12);
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    flex-wrap:wrap;
-    gap:12px;
-    font-size:.78rem;
-    color:rgba(255,255,255,.6);
-    letter-spacing:.06em;
-  }
+  .footer-bottom{max-width:var(--max-width);margin:40px auto 0;padding-top:20px;border-top:1px solid rgba(255,255,255,.12);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;font-size:.78rem;color:rgba(255,255,255,.6);letter-spacing:.06em;}
   .footer-bottom a{color:rgba(255,255,255,.85);}
 </style>
 </head>
 <body>
 
-<!-- ─── Header ──────────────────────────────────────────────── -->
 <header class="site-header">
   <div class="header-inner">
     <a href="/" class="brand">
-      <img src="/assets/logo.jpg" alt="405INK Tattoo Studio"
-           onerror="this.style.display='none'">
+      <img src="/assets/logo.jpg" alt="405INK" onerror="this.style.display='none'">
       <span class="brand-text">405INK</span>
     </a>
-
     <button class="burger" aria-label="Menu" id="burger">
       <span></span><span></span><span></span>
     </button>
-
     <nav class="nav" id="nav">
       <a href="/">Home</a>
       <a href="/booking.html">Book Now</a>
@@ -325,39 +106,31 @@
   </div>
 </header>
 
-<!-- ─── Page header ──────────────────────────────────────────── -->
 <div class="page-head">
   <h1>Our Artists</h1>
   <p>Custom tattoos by Oklahoma City's finest. Pick an artist and book directly.</p>
 </div>
 
-<!-- ─── Artist grid ──────────────────────────────────────────── -->
 <main class="artists-wrap">
   <div id="artists-grid" class="artists-grid">
     <p class="empty">Loading artists…</p>
   </div>
 </main>
 
-<!-- ─── Footer ───────────────────────────────────────────────── -->
 <footer class="site-footer">
   <div class="footer-inner">
     <address>
       <strong style="font-family:var(--font-head);letter-spacing:.12em;">405 INK</strong><br>
-      <a href="https://maps.apple/r/YW_VIj.2hT-ijG" target="_blank" rel="noopener">
-        14900 S Western Ave #110<br>
-        Oklahoma City, OK 73170
-      </a><br><br>
+      14900 S Western Ave #110<br>
+      Oklahoma City, OK 73170<br><br>
       <a href="sms:4054304581"><strong>(405) 430-4581</strong></a>
       <div class="footer-social">
-        <a href="https://www.instagram.com/405ink/" target="_blank" rel="noopener" aria-label="Instagram">IG</a>
-        <a href="https://www.facebook.com/" target="_blank" rel="noopener" aria-label="Facebook">FB</a>
-        <a href="https://www.tiktok.com/@405inktattoos" target="_blank" rel="noopener" aria-label="TikTok">TT</a>
+        <a href="https://www.instagram.com/405ink/" target="_blank" rel="noopener">IG</a>
+        <a href="https://www.facebook.com/" target="_blank" rel="noopener">FB</a>
+        <a href="https://www.tiktok.com/@405inktattoos" target="_blank" rel="noopener">TT</a>
       </div>
     </address>
-    <div class="footer-hours">
-      Tuesday–Saturday<br>
-      12pm – 8pm
-    </div>
+    <div class="footer-hours">Tuesday–Saturday<br>12pm – 8pm</div>
   </div>
   <div class="footer-bottom">
     <span>© <span id="yr"></span> 405INK. All Rights Reserved</span>
@@ -368,8 +141,6 @@
 <script>
 (async () => {
   document.getElementById("yr").textContent = new Date().getFullYear();
-
-  // Mobile nav toggle
   const burger = document.getElementById("burger");
   const nav = document.getElementById("nav");
   burger?.addEventListener("click", () => nav.classList.toggle("open"));
@@ -397,8 +168,7 @@
             <img src="${esc(img)}" alt="${esc(a.name)}" loading="lazy">
           </a>
           <a href="${esc(href)}" class="artist-name">${esc(a.name)}</a>
-        </div>
-      `;
+        </div>`;
     }).join("");
   } catch (err) {
     console.error(err);
