@@ -1,90 +1,134 @@
 // backend/db.js
 import pg from "pg";
-import { config } from "./config.js";
-import crypto from "node:crypto";
 
 const { Pool } = pg;
 
+const url = process.env.DATABASE_URL || "";
+const useSSL =
+  url.includes("sslmode=require") ||
+  url.includes("render.com") ||
+  process.env.NODE_ENV === "production";
+
 export const pool = new Pool({
-  connectionString: config.database.connectionString,
-  // Required for Render's managed PostgreSQL
-  ssl: {
-    rejectUnauthorized: false,
-  },
+  connectionString: url,
+  ssl: useSSL ? { rejectUnauthorized: false } : false,
 });
 
-async function initDb() {
+async function addColumnIfMissing(client, table, column, definition) {
+  await client.query(`
+    DO $$ BEGIN
+      ALTER TABLE ${table} ADD COLUMN ${column} ${definition};
+    EXCEPTION WHEN duplicate_column THEN NULL;
+    END $$;
+  `);
+}
+
+export async function initDb() {
   const client = await pool.connect();
   try {
+    await client.query(`BEGIN`);
+
+    // ── Core tables ─────────────────────────────────────────
     await client.query(`
       CREATE TABLE IF NOT EXISTS artists (
-        id            SERIAL PRIMARY KEY,
-        slug          TEXT UNIQUE NOT NULL,
-        name          TEXT NOT NULL,
-        specialty     TEXT,
-        bio           TEXT,
-        image_url     TEXT,
-        portfolio_url TEXT,
-        sort_order    INTEGER DEFAULT 0,
-        active        INTEGER DEFAULT 1,
-        created_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        id         SERIAL PRIMARY KEY,
+        name       TEXT NOT NULL,
+        active     INTEGER NOT NULL DEFAULT 1,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW()
       );
+    `);
 
+    await client.query(`
       CREATE TABLE IF NOT EXISTS bookings (
         id                SERIAL PRIMARY KEY,
         ref               TEXT UNIQUE NOT NULL,
         name              TEXT NOT NULL,
         email             TEXT NOT NULL,
-        phone             TEXT NOT NULL,
+        phone             TEXT,
+        placement         TEXT,
+        size              TEXT,
+        color_mode        TEXT,
+        description       TEXT,
         artist_id         INTEGER REFERENCES artists(id) ON DELETE SET NULL,
         artist_preference TEXT,
-        placement         TEXT NOT NULL,
-        size              TEXT NOT NULL,
-        color_mode        TEXT NOT NULL CHECK (color_mode IN ('black','color')),
-        description       TEXT,
-        reference_urls    TEXT DEFAULT '[]',
-        preferred_dates   TEXT,
-        status            TEXT NOT NULL DEFAULT 'pending',
-        deposit_amount    REAL,
+        deposit_amount    NUMERIC(10,2),
         deposit_method    TEXT,
-        deposit_paid      INTEGER DEFAULT 0,
+        deposit_paid      INTEGER NOT NULL DEFAULT 0,
         deposit_paid_at   TIMESTAMP,
         appointment_at    TIMESTAMP,
+        status            TEXT NOT NULL DEFAULT 'pending',
         notes             TEXT,
-        created_at        TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        updated_at        TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        created_at        TIMESTAMP NOT NULL DEFAULT NOW()
       );
     `);
-    console.log("Database tables initialized.");
+
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS receipts (
+        id           SERIAL PRIMARY KEY,
+        booking_id   INTEGER NOT NULL REFERENCES bookings(id) ON DELETE CASCADE,
+        file_url     TEXT NOT NULL,
+        status       TEXT NOT NULL DEFAULT 'pending',
+        reason       TEXT,
+        submitted_at TIMESTAMP NOT NULL DEFAULT NOW(),
+        reviewed_at  TIMESTAMP
+      );
+    `);
+
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS settings (
+        key   TEXT PRIMARY KEY,
+        value TEXT
+      );
+    `);
+
+    // ── Payment methods (fully DB-driven) ───────────────────
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS payment_methods (
+        id           SERIAL PRIMARY KEY,
+        key          TEXT UNIQUE NOT NULL,
+        label        TEXT NOT NULL,
+        handle       TEXT,
+        instructions TEXT,
+        enabled      INTEGER NOT NULL DEFAULT 1,
+        min_deposit  NUMERIC(10,2),
+        max_deposit  NUMERIC(10,2),
+        sort_order   INTEGER NOT NULL DEFAULT 0,
+        created_at   TIMESTAMP NOT NULL DEFAULT NOW()
+      );
+    `);
+
+    // ── Consultation columns on bookings ────────────────────
+    await addColumnIfMissing(client, "bookings", "consultation_required",  "INTEGER NOT NULL DEFAULT 0");
+    await addColumnIfMissing(client, "bookings", "consultation_done",      "INTEGER NOT NULL DEFAULT 0");
+    await addColumnIfMissing(client, "bookings", "consultation_at",        "TIMESTAMP");
+    await addColumnIfMissing(client, "bookings", "consultation_artist_id", "INTEGER REFERENCES artists(id) ON DELETE SET NULL");
+    await addColumnIfMissing(client, "bookings", "consultation_notes",     "TEXT");
+
+    // ── Seed payment methods once ───────────────────────────
+    const { rows: pmCount } = await client.query(
+      `SELECT COUNT(*)::int AS n FROM payment_methods`
+    );
+    if (pmCount[0].n === 0) {
+      await client.query(`
+        INSERT INTO payment_methods (key, label, handle, instructions, enabled, sort_order) VALUES
+          ('paypal', 'PayPal',      '', 'Send as Friends & Family to avoid fees.',          1, 1),
+          ('cash',   'Cash in shop','', 'Drop by the studio during open hours.',             1, 2),
+          ('card',   'Card in shop','', 'We accept card at the front desk.',                 1, 3),
+          ('venmo',  'Venmo',       '', 'Include your booking reference in the note.',      1, 4);
+      `);
+    }
+
+    // ── Seed default minimum deposit setting ────────────────
+    await client.query(`
+      INSERT INTO settings (key, value) VALUES ('min_deposit_default', '50')
+      ON CONFLICT (key) DO NOTHING;
+    `);
+
+    await client.query(`COMMIT`);
+  } catch (err) {
+    await client.query(`ROLLBACK`).catch(() => {});
+    throw err;
   } finally {
     client.release();
   }
 }
-
-// Run this on startup
-initDb().catch(err => {
-  console.error("Failed to initialize database:", err);
-  process.exit(1);
-});
-
-// ── Helper Functions (now async) ─────────────────────────────
-export async function nextBookingRef() {
-  const year = new Date().getFullYear();
-  const result = await pool.query(
-    "SELECT COUNT(*) AS n FROM bookings WHERE ref LIKE $1",
-    [`405-${year}-%`]
-  );
-  const n = parseInt(result.rows[0].n, 10);
-  return `405-${year}-${String(n + 1).padStart(4, "0")}`;
-}
-
-export async function listArtists({ activeOnly = false } = {}) {
-  const sql = activeOnly
-    ? "SELECT * FROM artists WHERE active = 1 ORDER BY sort_order, name"
-    : "SELECT * FROM artists ORDER BY sort_order, name";
-  const result = await pool.query(sql);
-  return result.rows;
-}
-
-// Keep slugify as is (no DB interaction)
-export function slugify(s) { /* ... unchanged ... */ }
