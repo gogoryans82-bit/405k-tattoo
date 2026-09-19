@@ -26,18 +26,12 @@ export async function getDefaultMinDeposit() {
   return Number.isFinite(n) ? n : 50;
 }
 
-/**
- * Validate a deposit against the global minimum + the method's min/max.
- * Returns { ok, error?, min?, max? }.
- */
 export async function validateDeposit(methodKey, amount) {
   if (amount == null || amount === "") return { ok: true };
-
   const n = Number(amount);
   if (!Number.isFinite(n) || n < 0) {
     return { ok: false, error: "Invalid deposit amount" };
   }
-
   const globalMin = await getDefaultMinDeposit();
   let min = globalMin;
   let max = null;
