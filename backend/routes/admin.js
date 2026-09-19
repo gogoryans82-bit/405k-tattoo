@@ -13,7 +13,6 @@ import {
 
 const router = express.Router();
 
-// ── Auth ────────────────────────────────────────────────────
 router.post("/login", async (req, res) => {
   if (!adminConfigured()) {
     return res.status(503).json({
@@ -38,10 +37,8 @@ router.get("/me", (req, res) => {
   res.json({ email: req.session.admin.email });
 });
 
-// Everything below requires auth
 router.use(requireAdmin);
 
-// ── Bookings list ───────────────────────────────────────────
 router.get("/bookings", async (req, res, next) => {
   try {
     const { status, q } = req.query;
@@ -79,7 +76,6 @@ router.get("/bookings/:id", async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-// ── Artists ─────────────────────────────────────────────────
 router.get("/artists", async (_req, res, next) => {
   try {
     const { rows } = await pool.query(`SELECT * FROM artists ORDER BY name`);
@@ -87,7 +83,6 @@ router.get("/artists", async (_req, res, next) => {
   } catch (err) { next(err); }
 });
 
-// ── Payment methods CRUD ────────────────────────────────────
 const MethodSchema = z.object({
   key:          z.string().min(1).max(40).regex(/^[a-z0-9_]+$/, "lowercase letters, numbers, underscore"),
   label:        z.string().min(1).max(60),
@@ -176,7 +171,6 @@ router.post("/payment-methods/reorder", async (req, res, next) => {
   } finally { c.release(); }
 });
 
-// ── Global minimum deposit ──────────────────────────────────
 router.get("/settings/min-deposit", async (_req, res, next) => {
   try { res.json({ min_deposit_default: await getDefaultMinDeposit() }); }
   catch (err) { next(err); }
@@ -194,7 +188,6 @@ router.put("/settings/min-deposit", async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-// ── Update booking ──────────────────────────────────────────
 const UpdateSchema = z.object({
   deposit_amount: z.coerce.number().min(0).max(100000).nullable().optional(),
   deposit_method: z.string().max(40).nullable().optional(),
@@ -224,7 +217,6 @@ router.patch("/bookings/:id", async (req, res, next) => {
 
     const d = p.data;
 
-    // Validate deposit against method + global min
     const check = await validateDeposit(
       d.deposit_method !== undefined ? d.deposit_method : before.deposit_method,
       d.deposit_amount !== undefined ? d.deposit_amount : before.deposit_amount
@@ -251,7 +243,6 @@ router.patch("/bookings/:id", async (req, res, next) => {
       vals
     );
 
-    // Re-fetch with artist joins for emails
     const { rows: afterRows } = await pool.query(`
       SELECT b.*, a.name AS artist_name, ca.name AS consultation_artist_name
       FROM bookings b
@@ -261,11 +252,9 @@ router.patch("/bookings/:id", async (req, res, next) => {
     `, [req.params.id]);
     const after = afterRows[0];
 
-    // ── Auto-emails on transitions ──────────────────────────
     const wasPaid = before.deposit_paid === 1;
     const isPaid  = after.deposit_paid === 1;
 
-    // 1. Deposit just set
     if (!isPaid && after.deposit_amount > 0 &&
         (!before.deposit_amount || Number(before.deposit_amount) === 0)) {
       const method = await getPaymentMethodByKey(after.deposit_method);
@@ -275,7 +264,6 @@ router.patch("/bookings/:id", async (req, res, next) => {
       });
     }
 
-    // 2. Consultation just scheduled / changed
     const consultationChanged =
       after.consultation_at !== before.consultation_at ||
       after.consultation_artist_id !== before.consultation_artist_id ||
@@ -287,7 +275,6 @@ router.patch("/bookings/:id", async (req, res, next) => {
       });
     }
 
-    // 3. Consultation just marked done
     if (before.consultation_done !== 1 && after.consultation_done === 1) {
       mail.send({
         to: after.email,
@@ -295,7 +282,6 @@ router.patch("/bookings/:id", async (req, res, next) => {
       });
     }
 
-    // 4. Appointment just scheduled (from an approved booking)
     if (after.appointment_at && after.appointment_at !== before.appointment_at && wasPaid) {
       mail.send({
         to: after.email,
@@ -307,7 +293,6 @@ router.patch("/bookings/:id", async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-// ── Approve / reject receipt ────────────────────────────────
 router.post("/receipts/:id/approve", async (req, res, next) => {
   try {
     const { rows } = await pool.query(
@@ -348,7 +333,7 @@ router.post("/receipts/:id/reject", async (req, res, next) => {
     if (!r) return res.status(404).json({ error: "Not found" });
 
     await pool.query(
-      `UPDATE receipts SET status='rejected', reason=$1, reviewed_at=NOW() WHERE id=$1`,
+      `UPDATE receipts SET status='rejected', reason=$1, reviewed_at=NOW() WHERE id=$2`,
       [reason, r.id]
     );
 
