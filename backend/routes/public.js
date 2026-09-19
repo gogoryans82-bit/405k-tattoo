@@ -1,7 +1,7 @@
 // backend/routes/public.js
 import express from "express";
 import { pool } from "../db.js";
-import { mail, config } from "../mailer.js";
+import { mail } from "../mailer.js";
 import {
   listPaymentMethods,
   getPaymentMethodByKey,
@@ -10,7 +10,6 @@ import {
 
 const router = express.Router();
 
-// ── Public list of enabled methods ──────────────────────────
 router.get("/payment-methods", async (_req, res) => {
   const rows = await listPaymentMethods({ onlyEnabled: true });
   res.set("Cache-Control", "no-store, max-age=0");
@@ -33,12 +32,10 @@ router.get("/deposit-info", async (_req, res) => {
   });
 });
 
-// ── Create booking ──────────────────────────────────────────
 router.post("/bookings", async (req, res, next) => {
   try {
     const b = req.body || {};
 
-    // Reject a disabled method at submit-time (a stale form may still carry it)
     if (b.deposit_method) {
       const m = await getPaymentMethodByKey(b.deposit_method);
       if (!m || !m.enabled) {
@@ -48,7 +45,6 @@ router.post("/bookings", async (req, res, next) => {
       }
     }
 
-    // Generate a reference
     const year = new Date().getFullYear();
     const { rows: seqRows } = await pool.query(
       `SELECT COUNT(*)::int AS n FROM bookings WHERE EXTRACT(YEAR FROM created_at) = $1`,
@@ -70,7 +66,6 @@ router.post("/bookings", async (req, res, next) => {
 
     const created = rows[0];
 
-    // Notify client + admin
     mail.send({ to: created.email, ...mail.tplClientReceived(created) });
     if (process.env.ADMIN_EMAIL) {
       mail.send({ to: process.env.ADMIN_EMAIL, ...mail.tplAdminNewBooking(created) });
@@ -80,7 +75,6 @@ router.post("/bookings", async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-// ── Upload receipt (client-side, base64 or URL) ─────────────
 router.post("/bookings/:ref/receipt", async (req, res, next) => {
   try {
     const { ref } = req.params;
@@ -111,7 +105,6 @@ router.post("/bookings/:ref/receipt", async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-// ── Full status ─────────────────────────────────────────────
 router.get("/bookings/:ref/status", async (req, res, next) => {
   try {
     const { ref } = req.params;
@@ -131,7 +124,6 @@ router.get("/bookings/:ref/status", async (req, res, next) => {
     const b = rows[0];
     if (!b) return res.status(404).json({ error: "Booking not found" });
 
-    // Receipt (latest approved, else latest pending)
     const { rows: rrows } = await pool.query(`
       SELECT file_url, status, submitted_at
       FROM receipts WHERE booking_id = $1
@@ -139,7 +131,6 @@ router.get("/bookings/:ref/status", async (req, res, next) => {
       LIMIT 1
     `, [b.id]);
 
-    // Resolve the method label regardless of enabled state (historic)
     const chosenMethod = b.deposit_method
       ? await getPaymentMethodByKey(b.deposit_method)
       : null;
