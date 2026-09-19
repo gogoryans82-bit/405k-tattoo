@@ -3,90 +3,86 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Admin · 405INK</title>
+<title>405INK Admin</title>
 <link rel="stylesheet" href="/assets/admin.css">
 </head>
 <body>
-
-<!-- Login -->
-<div id="login-view" class="login-view">
-  <form id="login-form" class="login-card">
-    <h1>405INK Admin</h1>
-    <p class="muted">Enter your admin password.</p>
-    <input type="password" id="login-password" placeholder="Password"
-           autocomplete="current-password" autofocus required>
-    <button class="btn" type="submit">Sign in</button>
-    <div id="login-error" class="error" hidden></div>
-  </form>
-</div>
-
-<!-- App -->
-<div id="app-view" hidden>
-  <header class="topbar">
-    <div class="topbar-brand">405INK · Admin</div>
-    <nav class="tabs">
-      <button data-tab="dash" class="active">Dashboard</button>
-      <button data-tab="bookings">Bookings</button>
-      <button data-tab="artists">Artists</button>
-    </nav>
-    <button id="logout" class="link-btn">Sign out</button>
+<div id="app">
+  <header class="admin-header">
+    <strong>405INK Admin</strong>
+    <button id="logout">Log out</button>
   </header>
 
-  <main>
-    <section data-view="dash">
-      <h2>Overview</h2>
-      <div class="stats" id="stats"></div>
-      <h3>Recent bookings</h3>
-      <div id="recent-bookings"></div>
-    </section>
+  <!-- Login -->
+  <section id="login-view">
+    <form id="login-form" class="card" style="max-width:420px;margin:80px auto;">
+      <h2>Admin login</h2>
+      <label>Email<input type="email" id="login-email" autocomplete="username" required></label>
+      <label>Password<input type="password" id="login-pass" autocomplete="current-password" required></label>
+      <button type="submit">Sign in</button>
+      <div id="login-error" class="err" hidden></div>
+    </form>
+  </section>
 
-    <section data-view="bookings" hidden>
-      <h2>Bookings</h2>
-      <div class="filters">
-        <input id="filter-q" placeholder="Search name / email / ref…">
-        <select id="filter-status">
+  <!-- Main -->
+  <section id="main-view" hidden>
+    <nav class="tabs">
+      <button data-tab="bookings" class="active">Bookings</button>
+      <button data-tab="methods">Payment methods</button>
+    </nav>
+
+    <div id="tab-bookings" class="tab-panel">
+      <div class="toolbar">
+        <input type="search" id="bk-search" placeholder="Search ref / name / email">
+        <select id="bk-status">
           <option value="">All statuses</option>
-          <option value="pending">Pending</option>
-          <option value="approved">Approved</option>
-          <option value="scheduled">Scheduled</option>
-          <option value="completed">Completed</option>
-          <option value="cancelled">Cancelled</option>
+          <option>pending</option><option>approved</option>
+          <option>scheduled</option><option>completed</option>
+          <option>cancelled</option>
         </select>
-        <select id="filter-paid">
-          <option value="">Any payment state</option>
-          <option value="1">Deposit paid</option>
-          <option value="0">Deposit unpaid</option>
-        </select>
-        <button id="filter-apply" class="btn btn--dark">Apply</button>
       </div>
-      <div id="bookings-list"></div>
-    </section>
+      <div id="bk-list"></div>
+    </div>
 
-    <section data-view="artists" hidden>
-      <h2>Artists</h2>
-      <button class="btn btn--dark" id="new-artist-btn">+ New artist</button>
-      <div id="artists-list" class="artist-grid"></div>
-    </section>
-  </main>
+    <div id="tab-methods" class="tab-panel" hidden>
+      <div class="card">
+        <h3>Global settings</h3>
+        <label style="display:flex;gap:12px;align-items:center;">
+          Minimum deposit ($)
+          <input type="number" id="pm-global-min" min="0" step="1" style="max-width:140px;">
+          <button id="pm-global-min-save">Save</button>
+        </label>
+      </div>
+
+      <div class="card">
+        <h3>Add payment method</h3>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <input id="pm-new-key"   placeholder="key (lowercase)" style="max-width:180px;">
+          <input id="pm-new-label" placeholder="Label"           style="max-width:220px;">
+          <button id="pm-add">Add</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Methods</h3>
+        <div id="pm-list"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Drawer -->
+  <div id="drawer-backdrop" class="backdrop" hidden></div>
+  <aside id="drawer" class="drawer" hidden>
+    <div class="drawer-header">
+      <strong id="drawer-title">Booking</strong>
+      <button id="drawer-close">✕</button>
+    </div>
+    <div id="drawer-body" class="drawer-body"></div>
+  </aside>
+
+  <div id="toast" class="toast" hidden></div>
 </div>
 
-<!-- Drawer -->
-<aside id="drawer" class="drawer" hidden>
-  <div class="drawer-head">
-    <h3 id="drawer-title">Booking</h3>
-    <button id="drawer-close" class="icon-btn" aria-label="Close">×</button>
-  </div>
-  <div id="drawer-body" class="drawer-body"></div>
-</aside>
-
-<!-- Modal -->
-<div id="modal" class="modal" hidden>
-  <div class="modal-card">
-    <button id="modal-close" class="icon-btn" aria-label="Close">×</button>
-    <div id="modal-body"></div>
-  </div>
-</div>
-
-<script src="/assets/admin.js" defer></script>
+<script src="/assets/admin.js" type="module"></script>
 </body>
 </html>
