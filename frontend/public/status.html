@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Your Booking — 405INK</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Josefin+Sans:wght@400;700&family=Nunito+Sans:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{--font-head:'Josefin Sans',sans-serif;--ink:#111;--muted:#666;}
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:'Nunito Sans',system-ui,sans-serif;color:var(--ink);background:#fafaf8;}
+  .wrap{max-width:720px;margin:0 auto;padding:40px 20px;}
+  h1{font-family:var(--font-head);letter-spacing:.06em;text-transform:uppercase;font-size:1.6rem;margin:0 0 6px;}
+
+  .status-summary{background:#fff;border:1px solid rgba(0,0,0,.12);padding:28px;margin-bottom:40px;}
+  .status-summary .ref{font-family:var(--font-head);color:#666;letter-spacing:.1em;font-size:.9rem;margin:0 0 20px;}
+  .status-summary dl{display:grid;grid-template-columns:150px 1fr;gap:10px 20px;margin:0;}
+  .status-summary dt{color:#666;font-size:.9rem;}
+  .status-summary dd{margin:0;}
+  .status-pill{display:inline-block;padding:3px 10px;font-size:.7rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;border-radius:20px;border:1px solid currentColor;margin-left:8px;vertical-align:middle;}
+  .status-pill.pending{color:#b87a00;}
+  .status-pill.approved{color:#0b5ed7;}
+  .status-pill.scheduled{color:#6f42c1;}
+  .status-pill.completed{color:#1f8a3f;}
+  .status-pill.cancelled{color:#c33;}
+
+  .timeline{position:relative;padding-left:34px;}
+  .timeline::before{content:"";position:absolute;left:11px;top:12px;bottom:12px;width:2px;background:#e0e0e0;}
+  .tl-item{position:relative;padding:0 0 32px 0;}
+  .tl-item:last-child{padding-bottom:0;}
+  .tl-item::before{content:"";position:absolute;left:-32px;top:6px;width:14px;height:14px;border-radius:50%;background:#fff;border:2px solid #ccc;}
+  .tl-item.done::before{background:#000;border-color:#000;}
+  .tl-item.current::before{background:#000;border-color:#000;box-shadow:0 0 0 4px rgba(0,0,0,.15);}
+  .tl-item .tl-title{font-weight:700;margin:0 0 4px;letter-spacing:.02em;}
+  .tl-item .tl-meta{color:#666;font-size:.9rem;margin:0;}
+  .tl-item .tl-detail{margin:8px 0 0;padding:10px 12px;background:#f6f6f4;border-left:3px solid #000;font-size:.9rem;line-height:1.5;}
+  .tl-item.pending .tl-title{color:#888;}
+
+  .err{background:#fee;color:#900;border:1px solid #fbb;padding:16px;margin:20px 0;}
+
+  @media (max-width:500px){
+    .status-summary dl{grid-template-columns:1fr;gap:2px;}
+    .status-summary dt{margin-top:10px;}
+    .status-summary dt:first-of-type{margin-top:0;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1 style="text-align:center;">Your Booking</h1>
+  <p id="lede" style="text-align:center;color:#666;">Loading…</p>
+  <div id="loading" style="text-align:center;padding:60px 0;color:#888;">Looking up your booking…</div>
+  <div id="error" class="err" hidden></div>
+  <div id="panel" hidden>
+    <div class="status-summary" id="summary"></div>
+    <div class="timeline" id="timeline"></div>
+  </div>
+</div>
+
+<script>
+(async () => {
+  const $ = s => document.querySelector(s);
+  const params = new URLSearchParams(location.search);
+  const ref = params.get("ref");
+  const email = params.get("email");
+  const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
+  const fmt = iso => !iso ? "—" : new Date(iso).toLocaleString("en-US", {weekday:"long",month:"long",day:"numeric",year:"numeric",hour:"numeric",minute:"2-digit"});
+  const fmtDay = iso => !iso ? "—" : new Date(iso).toLocaleDateString("en-US", {month:"short",day:"numeric",year:"numeric"});
+
+  function showError(msg){
+    $("#lede").textContent = "We couldn't load your booking.";
+    $("#loading").hidden = true;
+    $("#error").textContent = msg;
+    $("#error").hidden = false;
+  }
+
+  if (!ref || !email) return showError("Missing booking reference or email.");
+
+  let data;
+  try {
+    const res = await fetch(`/api/bookings/${encodeURIComponent(ref)}/status?email=${encodeURIComponent(email)}`, { cache: "no-store" });
+    if (!res.ok) throw new Error((await res.json()).error || "Booking not found");
+    data = await res.json();
+  } catch (err) { return showError(err.message); }
+
+  $("#lede").textContent = "Here's where your booking stands right now.";
+  $("#loading").hidden = true;
+  $("#panel").hidden = false;
+
+  const pillClass = { pending:"pending", approved:"approved", scheduled:"scheduled", completed:"completed", cancelled:"cancelled" }[data.status] || "pending";
+
+  $("#summary").innerHTML = `
+    <h1>${esc(data.name)}<span class="status-pill ${pillClass}">${esc(data.status)}</span></h1>
+    <p class="ref">Reference: <strong>${esc(data.ref)}</strong></p>
+    <dl>
+      <dt>Artist</dt><dd><strong>${esc(data.artist_name || data.artist_preference || "To be assigned")}</strong></dd>
+      <dt>Appointment</dt><dd>${data.appointment_at ? `<strong>${fmt(data.appointment_at)}</strong>` : "Not yet scheduled"}</dd>
+      <dt>Placement</dt><dd>${esc(data.placement || "—")}</dd>
+      <dt>Size</dt><dd>${esc(data.size || "—")}</dd>
+      <dt>Style</dt><dd>${data.color_mode === "color" ? "Colour" : "Black / grey"}</dd>
+      <dt>Deposit</dt><dd>$${data.deposit_amount ?? "—"}
+        ${data.deposit_method_label ? ` <span style="color:#666;">via ${esc(data.deposit_method_label)}</span>` : ""}
+        ${data.deposit_paid ? " <strong>· paid ✓</strong>" : " · awaiting payment"}</dd>
+      <dt>Booked on</dt><dd>${fmtDay(data.created_at)}</dd>
+    </dl>
+    ${data.description ? `
+      <div style="margin-top:24px;padding-top:20px;border-top:1px solid rgba(0,0,0,.12);">
+        <p style="margin:0 0 6px;font-size:.75rem;text-transform:uppercase;letter-spacing:.1em;color:#666;">Tattoo description</p>
+        <p style="margin:0;white-space:pre-wrap;">${esc(data.description)}</p>
+      </div>` : ""}
+    ${data.receipt_url ? `
+      <div style="margin-top:24px;padding-top:20px;border-top:1px solid rgba(0,0,0,.12);">
+        <p style="margin:0 0 10px;font-size:.75rem;text-transform:uppercase;letter-spacing:.1em;color:#666;">Your receipt</p>
+        <a href="${esc(data.receipt_url)}" target="_blank">
+          <img src="${esc(data.receipt_url)}" alt="Receipt" style="max-width:180px;border:1px solid rgba(0,0,0,.12);border-radius:4px;">
+        </a>
+      </div>` : ""}
+  `;
+
+  const steps = [];
+  steps.push({ title:"Booking received", meta:fmtDay(data.created_at), state:"done" });
+
+  if (data.deposit_amount != null) {
+    steps.push({
+      title:"Deposit approved",
+      meta:`$${data.deposit_amount}${data.deposit_method_label ? ` via ${data.deposit_method_label}` : ""}`,
+      state:"done",
+      detail: data.deposit_paid ? null : "Awaiting your payment and receipt upload.",
+    });
+  }
+
+  if (data.deposit_paid) {
+    steps.push({ title:"Receipt verified", meta: data.deposit_paid_at ? fmtDay(data.deposit_paid_at) : "", state:"done" });
+  } else if (data.receipt_url) {
+    steps.push({ title:"Receipt under review", meta:"We received your receipt", state:"current" });
+  }
+
+  if (data.consultation_required) {
+    const cState = data.consultation_done ? "done" : data.consultation_at ? "current" : "pending";
+    steps.push({
+      title: data.consultation_done ? "Consultation complete" : data.consultation_at ? "Consultation scheduled" : "Consultation pending",
+      meta: data.consultation_at ? fmt(data.consultation_at) : "",
+      state: cState,
+      detail: [
+        data.consultation_artist_name ? `<strong>Artist:</strong> ${esc(data.consultation_artist_name)}` : "",
+        data.consultation_notes ? esc(data.consultation_notes) : "",
+      ].filter(Boolean).join("<br>"),
+    });
+  }
+
+  if (data.appointment_at) {
+    steps.push({
+      title:"Appointment scheduled",
+      meta: fmt(data.appointment_at),
+      state: data.status === "completed" ? "done" : "current",
+      detail: data.artist_name ? `<strong>Artist:</strong> ${esc(data.artist_name)}` : "",
+    });
+  } else {
+    steps.push({ title:"Appointment scheduled", meta:"We'll confirm your date soon", state:"pending" });
+  }
+
+  steps.push({
+    title:"Appointment day",
+    meta: data.appointment_at ? fmtDay(data.appointment_at) : "TBD",
+    state: data.status === "completed" ? "done" : "pending",
+    detail: data.appointment_at ? "Bring a valid photo ID and arrive well-fed." : "",
+  });
+
+  $("#timeline").innerHTML = steps.map(s => `
+    <div class="tl-item ${s.state}">
+      <p class="tl-title">${s.title}</p>
+      ${s.meta ? `<p class="tl-meta">${s.meta}</p>` : ""}
+      ${s.detail ? `<p class="tl-detail">${s.detail}</p>` : ""}
+    </div>
+  `).join("");
+})();
+</script>
+</body>
+</html>
