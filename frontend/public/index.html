@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Book a Tattoo — 405INK Oklahoma City</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Josefin+Sans:wght@400;700&family=Nunito+Sans:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/app.css">
+</head>
+<body>
+
+<header class="site-header">
+  <div class="announcement-bar">
+    Text <a href="sms:4054304581">(405) 430-4581</a> · or book online below
+  </div>
+  <div class="header-inner">
+    <a href="/" class="brand">405INK</a>
+    <nav class="nav">
+      <a href="/">Home</a>
+      <a href="/booking" aria-current="page">Book Now</a>
+      <a href="#gallery">Portfolio</a>
+      <a href="#faq">FAQ</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+
+  <section class="section booking" id="book">
+    <div class="section-inner">
+      <h1>Book an Appointment</h1>
+      <p class="lede">
+        Tell us what you want and we'll get back within 1–2 business days.
+        Prefer to text? <a href="sms:4054304581">(405) 430-4581</a>
+      </p>
+
+      <form id="booking-form" class="booking-form" novalidate>
+        <div class="row">
+          <label>Full name *
+            <input name="name" required minlength="2" autocomplete="name">
+          </label>
+          <label>Email *
+            <input name="email" type="email" required autocomplete="email">
+          </label>
+        </div>
+
+        <div class="row">
+          <label>Phone *
+            <input name="phone" required autocomplete="tel" placeholder="(405) 555-1234">
+          </label>
+          <label>Preferred artist
+            <select name="artist_id" id="artist-select">
+              <option value="">No preference</option>
+            </select>
+          </label>
+        </div>
+
+        <div class="row">
+          <label>Placement *
+            <input name="placement" required placeholder="Forearm, ribs, calf…">
+          </label>
+          <label>Size *
+            <input name="size" required placeholder='e.g. 4" x 6"'>
+          </label>
+        </div>
+
+        <fieldset class="color-choice">
+          <legend>Black or colour? *</legend>
+          <label><input type="radio" name="color_mode" value="black" checked> Black / grey</label>
+          <label><input type="radio" name="color_mode" value="color"> Colour</label>
+        </fieldset>
+
+        <label>Description
+          <textarea name="description" rows="4"
+            placeholder="Tell us about the piece — style, meaning, any must-haves."></textarea>
+        </label>
+
+        <label>Preferred dates
+          <input name="preferred_dates"
+            placeholder="Any Saturdays in October, weekday afternoons…">
+        </label>
+
+        <label>Reference images (up to 5)
+          <input type="file" id="ref-input" accept="image/*" multiple>
+        </label>
+        <div id="ref-previews" class="previews"></div>
+
+        <div id="form-error" class="form-error" hidden></div>
+
+        <button type="submit" class="btn" id="submit-btn">
+          Send booking request
+        </button>
+        <p class="hint">
+          Submitting doesn't charge anything. We'll email you the deposit details.
+        </p>
+      </form>
+
+      <div id="success-panel" class="success-panel" hidden>
+        <h2>Booking received ✓</h2>
+        <p>Your reference number is:</p>
+        <p class="ref-code" id="ref-code"></p>
+        <p>Check your email — we'll follow up with the deposit amount and next steps.</p>
+        <button class="btn btn--dark" id="book-another">Book another</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="section gallery-section" id="gallery">
+    <div class="section-inner">
+      <h2 class="section-title">Our Artists</h2>
+      <div class="gallery" id="gallery-grid"></div>
+    </div>
+  </section>
+
+  <section class="section faq" id="faq">
+    <div class="section-inner">
+      <h2 class="section-title">Common questions</h2>
+      <details><summary>How much is a deposit?</summary>
+        <p>Deposits are set per artist and per piece. We'll tell you the exact amount when we email you back.</p></details>
+      <details><summary>How do I pay the deposit?</summary>
+        <p>PayPal, cash, card, or Venmo — whichever your artist prefers. Details come with your booking email.</p></details>
+      <details><summary>Do you take walk-ins?</summary>
+        <p>Yes, when an artist is available. Text us at <a href="sms:4054304581">(405) 430-4581</a> to check.</p></details>
+    </div>
+  </section>
+
+</main>
+
+<footer class="site-footer">
+  <div class="footer-inner">
+    <div>
+      <p><strong>405INK Tattoo Studio</strong></p>
+      <p>14900 S Western Ave #110<br>Oklahoma City, OK 73170</p>
+      <p><a href="sms:4054304581">(405) 430-4581</a></p>
+    </div>
+    <p class="copy">© <span id="yr"></span> 405INK</p>
+  </div>
+</footer>
+
+<script src="/assets/app.js" defer></script>
+</body>
+</html>
