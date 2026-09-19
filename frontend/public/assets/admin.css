@@ -1,0 +1,93 @@
+:root{
+  --black:#000; --white:#fff; --off:#f6f6f4; --ink:#111; --muted:#666;
+  --line:rgba(0,0,0,.12); --ok:#1f8a3f; --warn:#b87a00; --err:#c33;
+  --font:"Nunito Sans",system-ui,sans-serif; --head:"Josefin Sans",var(--font);
+}
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;font-family:var(--font);color:var(--ink);background:var(--off);line-height:1.5}
+button{font:inherit;cursor:pointer}
+input,select,textarea{font:inherit;padding:9px 11px;border:1px solid #ccc;background:#fff;border-radius:3px;width:100%}
+
+.btn{display:inline-block;font-size:.72rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;padding:11px 20px;border:1px solid var(--black);background:var(--black);color:var(--white);transition:background .15s,color .15s;border-radius:3px;width:auto}
+.btn:hover:not(:disabled){background:transparent;color:var(--black)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn--dark{background:var(--black);color:var(--white)}
+.btn--ghost{background:transparent;color:var(--ink);border-color:var(--line)}
+.btn--danger{background:#b00000;border-color:#b00000}
+.link-btn{background:none;border:0;color:var(--white);font-size:.75rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase}
+.icon-btn{background:none;border:0;font-size:1.4rem;line-height:1;width:32px;height:32px;padding:0;border-radius:50%}
+.icon-btn:hover{background:rgba(0,0,0,.06)}
+
+.login-view{min-height:100vh;display:grid;place-items:center;padding:24px;background:#000}
+.login-card{background:var(--white);padding:40px;border-radius:6px;width:100%;max-width:380px;display:flex;flex-direction:column;gap:16px}
+.login-card h1{margin:0;font-family:var(--head);letter-spacing:.06em;text-align:center}
+.login-card .btn{width:100%}
+.muted{color:var(--muted);font-size:.9rem;margin:0;text-align:center}
+.error{background:#ffe9e9;border:1px solid #f5b5b5;color:#8a1f1f;padding:10px 12px;border-radius:3px;font-size:.85rem}
+
+.topbar{position:sticky;top:0;z-index:20;background:var(--black);color:var(--white);display:flex;align-items:center;gap:24px;padding:12px 20px}
+.topbar-brand{font-family:var(--head);letter-spacing:.16em;font-weight:700}
+.tabs{display:flex;gap:4px;margin-left:auto}
+.tabs button{background:none;border:0;color:rgba(255,255,255,.7);font-size:.75rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;padding:8px 12px;border-radius:3px}
+.tabs button:hover,.tabs button.active{color:var(--white);background:rgba(255,255,255,.08)}
+
+main{max-width:1200px;margin:0 auto;padding:28px 20px 80px}
+h2{font-family:var(--head);letter-spacing:.06em;text-transform:uppercase;font-size:1.4rem;margin:0 0 20px}
+h3{font-size:1rem;letter-spacing:.08em;text-transform:uppercase;margin:32px 0 12px;color:var(--muted)}
+
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:16px}
+.stat{background:var(--white);border:1px solid var(--line);padding:20px;border-radius:5px}
+.stat .n{font-size:2rem;font-weight:700;line-height:1}
+.stat .l{font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-top:6px}
+
+.filters{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px;background:var(--white);padding:14px;border:1px solid var(--line);border-radius:5px}
+.filters input,.filters select{width:auto;flex:1 1 160px}
+.filters .btn{flex:0 0 auto}
+
+.booking-card{background:var(--white);border:1px solid var(--line);border-radius:5px;padding:16px;display:flex;gap:16px;flex-wrap:wrap;align-items:center;margin-bottom:10px;cursor:pointer;transition:border-color .15s}
+.booking-card:hover{border-color:#888}
+.booking-card .ref{font-family:var(--head);font-weight:700;letter-spacing:.06em;min-width:130px}
+.booking-card .who{flex:1 1 200px}
+.booking-card .who .name{font-weight:700}
+.booking-card .who .email{font-size:.82rem;color:var(--muted)}
+.badge{display:inline-block;font-size:.68rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:3px 8px;border-radius:20px;border:1px solid currentColor}
+.badge.pending{color:var(--warn)}
+.badge.approved{color:#0b5ed7}
+.badge.scheduled{color:#6f42c1}
+.badge.completed{color:var(--ok)}
+.badge.cancelled{color:var(--err)}
+.badge.paid{color:var(--ok);background:rgba(31,138,63,.08)}
+.badge.unpaid{color:var(--err);background:rgba(204,51,51,.08)}
+
+.drawer{position:fixed;top:0;right:0;bottom:0;width:min(520px,100vw);background:var(--white);z-index:40;box-shadow:-12px 0 40px rgba(0,0,0,.12);display:flex;flex-direction:column}
+.drawer-head{padding:16px 20px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center}
+.drawer-head h3{margin:0;font-size:1rem;letter-spacing:.06em;text-transform:uppercase}
+.drawer-body{padding:20px;overflow:auto;flex:1;display:flex;flex-direction:column;gap:14px}
+.field{display:flex;flex-direction:column;gap:6px}
+.field label{font-size:.72rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.actions{display:flex;gap:10px;flex-wrap:wrap;padding-top:12px;border-top:1px solid var(--line)}
+.ref-block{background:var(--off);padding:12px;border-radius:4px;font-family:var(--head);letter-spacing:.08em;text-align:center;font-size:1.1rem}
+.thumb-row{display:flex;gap:8px;flex-wrap:wrap}
+.thumb-row img{width:80px;height:80px;object-fit:cover;border:1px solid var(--line);border-radius:3px}
+
+.artist-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px;margin-top:16px}
+.artist-card{background:var(--white);border:1px solid var(--line);border-radius:5px;overflow:hidden;display:flex;flex-direction:column}
+.artist-card img{width:100%;aspect-ratio:1;object-fit:cover;background:#eee}
+.artist-card .body{padding:14px;flex:1;display:flex;flex-direction:column;gap:6px}
+.artist-card h4{margin:0;font-family:var(--head);letter-spacing:.06em;text-transform:uppercase}
+.artist-card .sub{color:var(--muted);font-size:.82rem}
+.artist-card .row-actions{display:flex;gap:6px;margin-top:auto;padding-top:10px;flex-wrap:wrap}
+
+.modal{position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.5);display:grid;place-items:center;padding:20px}
+.modal-card{background:var(--white);padding:24px;border-radius:6px;max-width:480px;width:100%;position:relative;max-height:90vh;overflow:auto}
+.modal-card form{display:flex;flex-direction:column;gap:14px}
+.modal-card h3{margin:0}
+
+.empty{background:var(--white);border:1px dashed var(--line);padding:32px;text-align:center;color:var(--muted);border-radius:5px}
+
+@media (max-width:640px){
+  .row2{grid-template-columns:1fr}
+  .topbar{flex-wrap:wrap}
+  .tabs{order:3;width:100%;overflow-x:auto;margin-left:0}
+}
