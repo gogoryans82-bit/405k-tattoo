@@ -24,8 +24,7 @@ export function escapeHtml(s) {
 
 export function fmtDate(iso) {
   if (!iso) return "—";
-  const d = new Date(iso);
-  return d.toLocaleString("en-US", {
+  return new Date(iso).toLocaleString("en-US", {
     weekday: "long", month: "long", day: "numeric",
     year: "numeric", hour: "numeric", minute: "2-digit",
   });
@@ -79,8 +78,6 @@ async function send({ to, subject, html }) {
     console.error("[mailer] send failed:", err.message);
   }
 }
-
-// ── Templates ─────────────────────────────────────────────
 
 export function tplClientReceived(b) {
   return {
