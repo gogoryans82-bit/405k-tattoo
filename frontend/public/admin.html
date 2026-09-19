@@ -27,6 +27,7 @@
     <nav class="tabs">
       <button data-tab="bookings" class="active">Bookings</button>
       <button data-tab="methods">Payment methods</button>
+      <button data-tab="artists">Artists</button>
     </nav>
 
     <div id="tab-bookings" class="tab-panel">
@@ -64,6 +65,26 @@
       <div class="card">
         <h3>Methods</h3>
         <div id="pm-list"></div>
+      </div>
+    </div>
+
+    <div id="tab-artists" class="tab-panel" hidden>
+      <div class="card">
+        <h3>Add artist</h3>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          <input id="ar-new-name"      placeholder="Name">
+          <input id="ar-new-slug"      placeholder="slug (lowercase)">
+          <input id="ar-new-specialty" placeholder="Specialty">
+          <input id="ar-new-image"     placeholder="Image URL">
+          <input id="ar-new-portfolio" placeholder="Portfolio / booking URL (optional)">
+          <input id="ar-new-instagram" placeholder="Instagram handle">
+        </div>
+        <button id="ar-add" style="margin-top:12px;">Add artist</button>
+      </div>
+
+      <div class="card">
+        <h3>Artists</h3>
+        <div id="ar-list"></div>
       </div>
     </div>
   </section>
