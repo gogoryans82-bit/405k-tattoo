@@ -28,7 +28,6 @@ export async function initDb() {
   try {
     await client.query(`BEGIN`);
 
-    // ── Core tables ─────────────────────────────────────────
     await client.query(`
       CREATE TABLE IF NOT EXISTS artists (
         id         SERIAL PRIMARY KEY,
@@ -81,7 +80,6 @@ export async function initDb() {
       );
     `);
 
-    // ── Payment methods (fully DB-driven) ───────────────────
     await client.query(`
       CREATE TABLE IF NOT EXISTS payment_methods (
         id           SERIAL PRIMARY KEY,
@@ -97,28 +95,25 @@ export async function initDb() {
       );
     `);
 
-    // ── Consultation columns on bookings ────────────────────
     await addColumnIfMissing(client, "bookings", "consultation_required",  "INTEGER NOT NULL DEFAULT 0");
     await addColumnIfMissing(client, "bookings", "consultation_done",      "INTEGER NOT NULL DEFAULT 0");
     await addColumnIfMissing(client, "bookings", "consultation_at",        "TIMESTAMP");
     await addColumnIfMissing(client, "bookings", "consultation_artist_id", "INTEGER REFERENCES artists(id) ON DELETE SET NULL");
     await addColumnIfMissing(client, "bookings", "consultation_notes",     "TEXT");
 
-    // ── Seed payment methods once ───────────────────────────
     const { rows: pmCount } = await client.query(
       `SELECT COUNT(*)::int AS n FROM payment_methods`
     );
     if (pmCount[0].n === 0) {
       await client.query(`
         INSERT INTO payment_methods (key, label, handle, instructions, enabled, sort_order) VALUES
-          ('paypal', 'PayPal',      '', 'Send as Friends & Family to avoid fees.',          1, 1),
-          ('cash',   'Cash in shop','', 'Drop by the studio during open hours.',             1, 2),
-          ('card',   'Card in shop','', 'We accept card at the front desk.',                 1, 3),
-          ('venmo',  'Venmo',       '', 'Include your booking reference in the note.',      1, 4);
+          ('paypal', 'PayPal',      '', 'Send as Friends & Family to avoid fees.',      1, 1),
+          ('cash',   'Cash in shop','', 'Drop by the studio during open hours.',         1, 2),
+          ('card',   'Card in shop','', 'We accept card at the front desk.',             1, 3),
+          ('venmo',  'Venmo',       '', 'Include your booking reference in the note.',  1, 4);
       `);
     }
 
-    // ── Seed default minimum deposit setting ────────────────
     await client.query(`
       INSERT INTO settings (key, value) VALUES ('min_deposit_default', '50')
       ON CONFLICT (key) DO NOTHING;
