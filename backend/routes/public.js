@@ -10,6 +10,7 @@ import {
 
 const router = express.Router();
 
+// ── Payment methods (public, enabled only) ──────────────────
 router.get("/payment-methods", async (_req, res) => {
   const rows = await listPaymentMethods({ onlyEnabled: true });
   res.set("Cache-Control", "no-store, max-age=0");
@@ -32,6 +33,51 @@ router.get("/deposit-info", async (_req, res) => {
   });
 });
 
+// ── Artists — simple list for the booking form dropdown ─────
+router.get("/artists", async (_req, res, next) => {
+  try {
+    const { rows } = await pool.query(
+      `SELECT id, name FROM artists WHERE active = 1 ORDER BY name`
+    );
+    res.json(rows);
+  } catch (err) { next(err); }
+});
+
+// ── Artists — rich list for the /allartists page ────────────
+router.get("/artists/public", async (_req, res, next) => {
+  try {
+    const { rows } = await pool.query(`
+      SELECT
+        id,
+        name,
+        COALESCE(specialty, '')  AS specialty,
+        COALESCE(bio, '')        AS bio,
+        COALESCE(image_url, '')  AS image_url,
+        COALESCE(slug, '')       AS slug,
+        COALESCE(instagram, '')  AS instagram
+      FROM artists
+      WHERE active = 1
+      ORDER BY name
+    `);
+
+    const artists = rows.map(a => ({
+      id:         a.id,
+      name:       a.name,
+      specialty:  a.specialty,
+      bio:        a.bio,
+      image_url:  a.image_url,
+      slug:       a.slug,
+      instagram:  a.instagram,
+      booking_url: `/booking.html?artist=${encodeURIComponent(a.name)}`,
+      profile_url: a.slug ? `/artist.html?slug=${encodeURIComponent(a.slug)}` : null,
+    }));
+
+    res.set("Cache-Control", "no-store, max-age=0");
+    res.json(artists);
+  } catch (err) { next(err); }
+});
+
+// ── Create booking ──────────────────────────────────────────
 router.post("/bookings", async (req, res, next) => {
   try {
     const b = req.body || {};
@@ -75,6 +121,7 @@ router.post("/bookings", async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
+// ── Upload receipt ──────────────────────────────────────────
 router.post("/bookings/:ref/receipt", async (req, res, next) => {
   try {
     const { ref } = req.params;
@@ -105,6 +152,7 @@ router.post("/bookings/:ref/receipt", async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
+// ── Full status of a booking ────────────────────────────────
 router.get("/bookings/:ref/status", async (req, res, next) => {
   try {
     const { ref } = req.params;
