@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Admin · 405INK</title>
+<link rel="stylesheet" href="/assets/admin.css">
+</head>
+<body>
+
+<!-- Login -->
+<div id="login-view" class="login-view">
+  <form id="login-form" class="login-card">
+    <h1>405INK Admin</h1>
+    <p class="muted">Enter your admin password.</p>
+    <input type="password" id="login-password" placeholder="Password"
+           autocomplete="current-password" autofocus required>
+    <button class="btn" type="submit">Sign in</button>
+    <div id="login-error" class="error" hidden></div>
+  </form>
+</div>
+
+<!-- App -->
+<div id="app-view" hidden>
+  <header class="topbar">
+    <div class="topbar-brand">405INK · Admin</div>
+    <nav class="tabs">
+      <button data-tab="dash" class="active">Dashboard</button>
+      <button data-tab="bookings">Bookings</button>
+      <button data-tab="artists">Artists</button>
+    </nav>
+    <button id="logout" class="link-btn">Sign out</button>
+  </header>
+
+  <main>
+    <section data-view="dash">
+      <h2>Overview</h2>
+      <div class="stats" id="stats"></div>
+      <h3>Recent bookings</h3>
+      <div id="recent-bookings"></div>
+    </section>
+
+    <section data-view="bookings" hidden>
+      <h2>Bookings</h2>
+      <div class="filters">
+        <input id="filter-q" placeholder="Search name / email / ref…">
+        <select id="filter-status">
+          <option value="">All statuses</option>
+          <option value="pending">Pending</option>
+          <option value="approved">Approved</option>
+          <option value="scheduled">Scheduled</option>
+          <option value="completed">Completed</option>
+          <option value="cancelled">Cancelled</option>
+        </select>
+        <select id="filter-paid">
+          <option value="">Any payment state</option>
+          <option value="1">Deposit paid</option>
+          <option value="0">Deposit unpaid</option>
+        </select>
+        <button id="filter-apply" class="btn btn--dark">Apply</button>
+      </div>
+      <div id="bookings-list"></div>
+    </section>
+
+    <section data-view="artists" hidden>
+      <h2>Artists</h2>
+      <button class="btn btn--dark" id="new-artist-btn">+ New artist</button>
+      <div id="artists-list" class="artist-grid"></div>
+    </section>
+  </main>
+</div>
+
+<!-- Drawer -->
+<aside id="drawer" class="drawer" hidden>
+  <div class="drawer-head">
+    <h3 id="drawer-title">Booking</h3>
+    <button id="drawer-close" class="icon-btn" aria-label="Close">×</button>
+  </div>
+  <div id="drawer-body" class="drawer-body"></div>
+</aside>
+
+<!-- Modal -->
+<div id="modal" class="modal" hidden>
+  <div class="modal-card">
+    <button id="modal-close" class="icon-btn" aria-label="Close">×</button>
+    <div id="modal-body"></div>
+  </div>
+</div>
+
+<script src="/assets/admin.js" defer></script>
+</body>
+</html>
