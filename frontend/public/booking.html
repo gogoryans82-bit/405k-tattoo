@@ -1,6 +1,283 @@
-<fieldset class="field">
-  <label>Preferred deposit method</label>
-  <div id="method-options" class="radio-grid">Loading…</div>
-  <small id="method-hint" class="hint"></small>
-  <div id="method-instructions" class="hint" style="margin-top:8px;"></div>
-</fieldset>
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Book an Appointment — 405INK</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Josefin+Sans:wght@400;700&family=Nunito+Sans:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#111;
+    --muted:#666;
+    --line:rgba(0,0,0,.12);
+    --bg:#fafaf8;
+    --card:#fff;
+    --font-head:'Josefin Sans',sans-serif;
+    --font-body:'Nunito Sans',system-ui,sans-serif;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:var(--font-body);color:var(--ink);background:var(--bg);line-height:1.55;}
+  a{color:var(--ink);}
+
+  header.site-header{border-bottom:1px solid var(--line);background:#fff;}
+  .announcement-bar{background:#000;color:#fff;font-size:.75rem;letter-spacing:.15em;text-align:center;padding:8px 16px;text-transform:uppercase;}
+  .header-inner{max-width:1100px;margin:0 auto;padding:16px 24px;display:flex;justify-content:space-between;align-items:center;}
+  .brand{font-family:var(--font-head);font-weight:700;font-size:1.4rem;letter-spacing:.15em;text-decoration:none;color:var(--ink);}
+  .nav a{margin-left:20px;text-decoration:none;color:var(--ink);font-size:.95rem;}
+  .nav a:hover{border-bottom:1px solid var(--ink);}
+
+  main{max-width:720px;margin:0 auto;padding:56px 24px 80px;}
+  h1{font-family:var(--font-head);letter-spacing:.06em;text-transform:uppercase;text-align:center;font-size:1.7rem;margin:0 0 8px;}
+  .lede{color:var(--muted);text-align:center;margin:0 auto 40px;max-width:520px;}
+
+  form{background:var(--card);border:1px solid var(--line);padding:32px;}
+  .field{margin:18px 0;}
+  .field label{display:block;font-size:.78rem;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:6px;font-weight:700;}
+  .field input,
+  .field select,
+  .field textarea{width:100%;padding:12px 14px;border:1px solid var(--line);background:#fff;font:inherit;color:var(--ink);border-radius:0;}
+  .field textarea{min-height:110px;resize:vertical;}
+  .field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--ink);}
+  .field .hint{display:block;margin-top:6px;color:var(--muted);font-size:.85rem;}
+  .row{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+  @media (max-width:600px){ .row{grid-template-columns:1fr;} }
+
+  #method-options{display:flex;flex-direction:column;gap:8px;}
+  #method-options .radio{
+    display:flex;align-items:center;gap:10px;padding:12px 14px;
+    border:1px solid var(--line);background:#fff;cursor:pointer;font-size:.95rem;
+  }
+  #method-options .radio:hover{border-color:var(--ink);}
+  #method-options .radio input{width:auto;margin:0;}
+  #method-options .radio small{color:var(--muted);margin-left:auto;}
+
+  button.primary{
+    width:100%;padding:16px 24px;background:#000;color:#fff;border:none;cursor:pointer;
+    font-family:var(--font-head);letter-spacing:.15em;text-transform:uppercase;font-weight:700;font-size:.9rem;
+    margin-top:24px;
+  }
+  button.primary:disabled{opacity:.5;cursor:not-allowed;}
+
+  .form-error{background:#fee;color:#900;border:1px solid #fbb;padding:14px 16px;margin:16px 0;font-size:.9rem;}
+  .form-notice{background:#f6f6f4;border-left:4px solid #000;padding:14px 16px;margin:12px 0;font-size:.9rem;color:#444;}
+
+  .success-card{background:var(--card);border:1px solid var(--line);padding:40px 32px;text-align:center;}
+  .success-card h2{font-family:var(--font-head);letter-spacing:.06em;text-transform:uppercase;margin:0 0 12px;}
+  .success-card .ref{font-family:var(--font-head);font-size:1.6rem;letter-spacing:.1em;margin:16px 0;padding:16px;background:#f6f6f4;border-left:4px solid #000;}
+  .success-card p{color:var(--muted);}
+  .success-card a.btn{
+    display:inline-block;margin-top:20px;padding:14px 28px;background:#000;color:#fff;
+    text-decoration:none;font-family:var(--font-head);letter-spacing:.12em;text-transform:uppercase;font-size:.85rem;font-weight:700;
+  }
+
+  footer.site-footer{border-top:1px solid var(--line);background:#fff;padding:32px 24px;text-align:center;color:var(--muted);font-size:.85rem;}
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="announcement-bar">405INK Tattoo Studio</div>
+  <div class="header-inner">
+    <a href="/" class="brand">405INK</a>
+    <nav class="nav">
+      <a href="/">Home</a>
+      <a href="/booking">Book</a>
+      <a href="/#gallery">Portfolio</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <h1>Book an Appointment</h1>
+  <p class="lede">Tell us what you're thinking. We'll review your request and email you
+     payment details within 1–2 business days.</p>
+
+  <div id="error" class="form-error" hidden></div>
+
+  <form id="booking-form">
+    <div class="row">
+      <div class="field">
+        <label for="name">Full name *</label>
+        <input id="name" name="name" type="text" required autocomplete="name">
+      </div>
+      <div class="field">
+        <label for="email">Email *</label>
+        <input id="email" name="email" type="email" required autocomplete="email">
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="phone">Phone</label>
+      <input id="phone" name="phone" type="tel" autocomplete="tel">
+    </div>
+
+    <div class="row">
+      <div class="field">
+        <label for="placement">Placement</label>
+        <input id="placement" name="placement" type="text" placeholder="e.g. forearm, ribs, calf">
+      </div>
+      <div class="field">
+        <label for="size">Approximate size</label>
+        <input id="size" name="size" type="text" placeholder='e.g. 4" x 6"'>
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="color_mode">Style</label>
+      <select id="color_mode" name="color_mode">
+        <option value="">Choose…</option>
+        <option value="color">Colour</option>
+        <option value="black">Black / grey</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label for="description">Tattoo description *</label>
+      <textarea id="description" name="description" required
+        placeholder="Describe the design, references, mood, anything you want us to know."></textarea>
+    </div>
+
+    <div class="field">
+      <label for="artist_preference">Artist preference</label>
+      <select id="artist_preference" name="artist_preference">
+        <option value="">No preference</option>
+        <!-- populated from /api/artists -->
+      </select>
+    </div>
+
+    <fieldset class="field" style="border:none;padding:0;margin:18px 0;">
+      <label>Preferred deposit method</label>
+      <div id="method-options">Loading…</div>
+      <small id="method-hint" class="hint"></small>
+      <div id="method-instructions" class="hint" style="margin-top:8px;"></div>
+    </fieldset>
+
+    <button type="submit" class="primary" id="submit-btn">Submit booking request</button>
+  </form>
+
+  <div id="success" class="success-card" hidden>
+    <h2>Request received</h2>
+    <p>We got your booking. Save your reference — you'll need it to check the status page.</p>
+    <div class="ref" id="success-ref"></div>
+    <p>Check your email — we just sent a confirmation with a link to your live status page.</p>
+    <a class="btn" id="status-link" href="#">View booking status →</a>
+  </div>
+</main>
+
+<footer class="site-footer">
+  <p><strong>405INK Tattoo Studio</strong> · 14900 S Western Ave #110, Oklahoma City, OK 73170 · (405) 430-4581</p>
+</footer>
+
+<script>
+(async () => {
+  const $ = (s) => document.querySelector(s);
+  const esc = (s) => String(s ?? "").replace(/[&<>"']/g, c =>
+    ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
+
+  // ── Load artists ─────────────────────────────────────────
+  try {
+    const res = await fetch("/api/artists", { cache: "no-store" });
+    if (res.ok) {
+      const artists = await res.json();
+      const sel = $("#artist_preference");
+      for (const a of artists) {
+        const o = document.createElement("option");
+        o.value = a.name;
+        o.textContent = a.name;
+        sel.appendChild(o);
+      }
+    }
+  } catch {}
+
+  // ── Load enabled payment methods ────────────────────────
+  const wrap = $("#method-options");
+  const hint = $("#method-hint");
+  const fieldset = wrap.closest("fieldset");
+  let methods = [];
+
+  try {
+    const [r1, r2] = await Promise.all([
+      fetch("/api/payment-methods", { cache: "no-store" }),
+      fetch("/api/deposit-info",    { cache: "no-store" }),
+    ]);
+    methods = await r1.json();
+    const info = await r2.json();
+
+    if (!methods.length) {
+      // No methods enabled → hide the fieldset entirely, don't offer a broken choice
+      fieldset.hidden = true;
+      document.querySelectorAll('input[name="deposit_method"]').forEach(el => el.remove());
+      const notice = document.createElement("div");
+      notice.className = "form-notice";
+      notice.textContent = "Deposit methods are being updated. Submit your booking and we'll send you payment options by email.";
+      fieldset.parentNode.insertBefore(notice, fieldset);
+    } else {
+      wrap.innerHTML = methods.map((m, i) => `
+        <label class="radio">
+          <input type="radio" name="deposit_method"
+                 value="${esc(m.key)}" ${i === 0 ? "checked" : ""}>
+          <span>${esc(m.label)}</span>
+          ${m.handle ? `<small>${esc(m.handle)}</small>` : ""}
+        </label>
+      `).join("");
+
+      hint.textContent = `Minimum deposit is $${info.min_deposit_default}.`;
+
+      const box = $("#method-instructions");
+      const render = () => {
+        const sel = wrap.querySelector('input[name="deposit_method"]:checked')?.value;
+        const m = methods.find(x => x.key === sel);
+        box.textContent = m?.instructions || "";
+      };
+      wrap.addEventListener("change", render);
+      render();
+    }
+  } catch (err) {
+    console.error("Could not load payment methods", err);
+    fieldset.hidden = true;
+  }
+
+  // ── Submit ───────────────────────────────────────────────
+  const form = $("#booking-form");
+  const errorBox = $("#error");
+  const submitBtn = $("#submit-btn");
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    errorBox.hidden = true;
+    submitBtn.disabled = true;
+    submitBtn.textContent = "Sending…";
+
+    const fd = new FormData(form);
+    const payload = Object.fromEntries(fd.entries());
+
+    try {
+      const res = await fetch("/api/bookings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Could not submit booking");
+
+      // Show success
+      form.hidden = true;
+      $("#success-ref").textContent = data.ref;
+      $("#status-link").href =
+        `/status.html?ref=${encodeURIComponent(data.ref)}&email=${encodeURIComponent(payload.email)}`;
+      $("#success").hidden = false;
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    } catch (err) {
+      errorBox.textContent = err.message;
+      errorBox.hidden = false;
+      submitBtn.disabled = false;
+      submitBtn.textContent = "Submit booking request";
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  });
+})();
+</script>
+</body>
+</html>
