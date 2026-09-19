@@ -19,7 +19,6 @@ button:disabled{opacity:.5;cursor:not-allowed;}
 .toolbar{display:flex;gap:8px;margin:16px 0;}
 .err{background:#fee;color:#900;padding:10px 14px;border:1px solid #fbb;margin:12px 0;}
 
-/* Payment methods table */
 #pm-list{display:flex;flex-direction:column;}
 .pm-row{display:grid;grid-template-columns:44px 1.3fr 1fr 1.5fr 90px 90px auto auto;gap:8px;align-items:center;padding:10px;border-bottom:1px solid var(--line);}
 .pm-input{padding:8px 10px;border:1px solid var(--line);font:inherit;width:100%;}
@@ -30,12 +29,10 @@ button:disabled{opacity:.5;cursor:not-allowed;}
 .pm-del{background:#c33;}
 @media (max-width:900px){ .pm-row{grid-template-columns:1fr 1fr;} }
 
-/* Booking list */
 .bk-row{display:grid;grid-template-columns:110px 1fr 1fr 120px 100px 80px;gap:10px;padding:12px;border-bottom:1px solid var(--line);cursor:pointer;align-items:center;}
 .bk-row:hover{background:#f4f4f2;}
 .bk-ref{font-family:monospace;font-size:.85rem;}
 
-/* Drawer */
 .backdrop{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:10;}
 .drawer{position:fixed;top:0;right:0;bottom:0;width:min(560px,100vw);background:#fff;z-index:11;display:flex;flex-direction:column;box-shadow:-8px 0 24px rgba(0,0,0,.15);}
 .drawer-header{display:flex;justify-content:space-between;align-items:center;padding:16px 20px;border-bottom:1px solid var(--line);}
@@ -44,5 +41,4 @@ button:disabled{opacity:.5;cursor:not-allowed;}
 .drawer-body .field{margin:12px 0;}
 .drawer-body .actions{display:flex;gap:8px;margin-top:20px;}
 
-/* Toast */
 .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#000;color:#fff;padding:12px 20px;border-radius:4px;z-index:99;}
