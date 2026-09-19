@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Book an Appointment — 405INK</title>
+<title>Your Booking — 405INK</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Josefin+Sans:wght@400;700&family=Nunito+Sans:wght@400;700&display=swap" rel="stylesheet">
@@ -19,28 +19,174 @@
   .nav a{margin-left:20px;text-decoration:none;color:var(--ink);font-size:.95rem;}
   .nav a:hover{border-bottom:1px solid var(--ink);}
   main{max-width:720px;margin:0 auto;padding:56px 24px 80px;}
-  h1{font-family:var(--font-head);letter-spacing:.06em;text-transform:uppercase;text-align:center;font-size:1.7rem;margin:0 0 8px;}
-  .lede{color:var(--muted);text-align:center;margin:0 auto 40px;max-width:520px;}
-  form{background:var(--card);border:1px solid var(--line);padding:32px;}
-  .field{margin:18px 0;}
-  .field label{display:block;font-size:.78rem;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:6px;font-weight:700;}
-  .field input,.field select,.field textarea{width:100%;padding:12px 14px;border:1px solid var(--line);background:#fff;font:inherit;color:var(--ink);border-radius:0;}
-  .field textarea{min-height:110px;resize:vertical;}
-  .field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--ink);}
-  .field .hint{display:block;margin-top:6px;color:var(--muted);font-size:.85rem;}
-  .row{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
-  @media (max-width:600px){ .row{grid-template-columns:1fr;} }
-  #method-options{display:flex;flex-direction:column;gap:8px;}
-  #method-options .radio{display:flex;align-items:center;gap:10px;padding:12px 14px;border:1px solid var(--line);background:#fff;cursor:pointer;font-size:.95rem;}
-  #method-options .radio:hover{border-color:var(--ink);}
-  #method-options .radio input{width:auto;margin:0;}
-  #method-options .radio small{color:var(--muted);margin-left:auto;}
-  button.primary{width:100%;padding:16px 24px;background:#000;color:#fff;border:none;cursor:pointer;font-family:var(--font-head);letter-spacing:.15em;text-transform:uppercase;font-weight:700;font-size:.9rem;margin-top:24px;}
-  button.primary:disabled{opacity:.5;cursor:not-allowed;}
-  .form-error{background:#fee;color:#900;border:1px solid #fbb;padding:14px 16px;margin:16px 0;font-size:.9rem;}
-  .form-notice{background:#f6f6f4;border-left:4px solid #000;padding:14px 16px;margin:12px 0;font-size:.9rem;color:#444;}
-  .success-card{background:var(--card);border:1px solid var(--line);padding:40px 32px;text-align:center;}
-  .success-card h2{font-family:var(--font-head);letter-spacing:.06em;text-transform:uppercase;margin:0 0 12px;}
-  .success-card .ref{font-family:var(--font-head);font-size:1.6rem;letter-spacing:.1em;margin:16px 0;padding:16px;background:#f6f6f4;border-left:4px solid #000;}
-  .success-card p{color:var(--muted);}
-  .success-card a.btn{display:inline-block;margin
+  h1.page-title{font-family:var(--font-head);letter-spacing:.06em;text-transform:uppercase;text-align:center;font-size:1.7rem;margin:0 0 8px;}
+  #lede{text-align:center;color:var(--muted);margin:0 0 32px;}
+  .err{background:#fee;color:#900;border:1px solid #fbb;padding:16px 18px;margin:20px 0;font-size:.9rem;}
+  .status-summary{background:var(--card);border:1px solid var(--line);padding:28px;margin-bottom:40px;}
+  .status-summary h2{font-family:var(--font-head);letter-spacing:.06em;text-transform:uppercase;font-size:1.3rem;margin:0 0 6px;}
+  .status-summary .ref{font-family:var(--font-head);color:var(--muted);letter-spacing:.1em;font-size:.85rem;margin:0 0 20px;}
+  .status-summary dl{display:grid;grid-template-columns:150px 1fr;gap:10px 20px;margin:0;}
+  .status-summary dt{color:var(--muted);font-size:.85rem;text-transform:uppercase;letter-spacing:.05em;}
+  .status-summary dd{margin:0;}
+  @media (max-width:520px){ .status-summary dl{grid-template-columns:1fr;gap:2px;} .status-summary dt{margin-top:12px;} .status-summary dt:first-of-type{margin-top:0;} }
+  .status-pill{display:inline-block;padding:3px 12px;font-size:.68rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;border-radius:20px;border:1px solid currentColor;margin-left:8px;vertical-align:middle;}
+  .status-pill.pending{color:#b87a00;} .status-pill.approved{color:#0b5ed7;} .status-pill.scheduled{color:#6f42c1;} .status-pill.completed{color:#1f8a3f;} .status-pill.cancelled{color:#c33;}
+  .section-block{margin-top:24px;padding-top:20px;border-top:1px solid var(--line);}
+  .section-block .label{font-size:.72rem;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);margin:0 0 8px;font-weight:700;}
+  .section-block p{margin:0 0 6px;white-space:pre-wrap;}
+  .section-block .receipt-thumb{max-width:200px;border:1px solid var(--line);border-radius:4px;display:block;margin-top:8px;}
+  .timeline{position:relative;padding-left:34px;}
+  .timeline::before{content:"";position:absolute;left:11px;top:12px;bottom:12px;width:2px;background:#e0e0e0;}
+  .tl-item{position:relative;padding:0 0 32px 0;}
+  .tl-item:last-child{padding-bottom:0;}
+  .tl-item::before{content:"";position:absolute;left:-32px;top:6px;width:14px;height:14px;border-radius:50%;background:#fff;border:2px solid #ccc;box-sizing:border-box;z-index:1;}
+  .tl-item.done::before{background:#000;border-color:#000;}
+  .tl-item.current::before{background:#000;border-color:#000;box-shadow:0 0 0 4px rgba(0,0,0,.15);}
+  .tl-item .tl-title{font-weight:700;margin:0 0 4px;letter-spacing:.02em;}
+  .tl-item .tl-meta{color:var(--muted);font-size:.88rem;margin:0;}
+  .tl-item .tl-detail{margin:8px 0 0;padding:10px 12px;background:#f6f6f4;border-left:3px solid #000;font-size:.88rem;line-height:1.5;}
+  .tl-item.pending .tl-title{color:#888;}
+  footer.site-footer{border-top:1px solid var(--line);background:#fff;padding:32px 24px;text-align:center;color:var(--muted);font-size:.85rem;}
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="announcement-bar">405INK Tattoo Studio</div>
+  <div class="header-inner">
+    <a href="/" class="brand">405INK</a>
+    <nav class="nav">
+      <a href="/">Home</a>
+      <a href="/booking.html">Book</a>
+      <a href="/allartists.html">Artists</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <h1 class="page-title">Your Booking</h1>
+  <p id="lede">Loading…</p>
+
+  <div id="loading" style="text-align:center;padding:60px 0;color:#888;">Looking up your booking…</div>
+  <div id="error" class="err" hidden></div>
+
+  <div id="panel" hidden>
+    <div class="status-summary" id="summary"></div>
+    <div class="timeline" id="timeline"></div>
+  </div>
+</main>
+
+<footer class="site-footer">
+  <p><strong>405INK Tattoo Studio</strong> · 14900 S Western Ave #110, Oklahoma City, OK 73170 · (405) 430-4581</p>
+</footer>
+
+<script>
+(async () => {
+  const $ = (s) => document.querySelector(s);
+  const params = new URLSearchParams(location.search);
+  const ref = params.get("ref");
+  const email = params.get("email");
+  const esc = (s) => String(s ?? "").replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
+  const fmt = (iso) => !iso ? "—" : new Date(iso).toLocaleString("en-US", {weekday:"long",month:"long",day:"numeric",year:"numeric",hour:"numeric",minute:"2-digit"});
+  const fmtDay = (iso) => !iso ? "—" : new Date(iso).toLocaleDateString("en-US", {month:"short",day:"numeric",year:"numeric"});
+
+  function showError(msg){
+    $("#lede").textContent = "We couldn't load your booking.";
+    $("#loading").hidden = true;
+    $("#error").textContent = msg;
+    $("#error").hidden = false;
+  }
+
+  if (!ref || !email) return showError("Missing booking reference or email.");
+
+  let data;
+  try {
+    const res = await fetch(`/api/bookings/${encodeURIComponent(ref)}/status?email=${encodeURIComponent(email)}`, { cache: "no-store" });
+    if (!res.ok) throw new Error((await res.json()).error || "Booking not found");
+    data = await res.json();
+  } catch (err) { return showError(err.message); }
+
+  $("#lede").textContent = "Here's where your booking stands right now.";
+  $("#loading").hidden = true;
+  $("#panel").hidden = false;
+
+  const pillClass = { pending:"pending", approved:"approved", scheduled:"scheduled", completed:"completed", cancelled:"cancelled" }[data.status] || "pending";
+
+  $("#summary").innerHTML = `
+    <h2>${esc(data.name)}<span class="status-pill ${pillClass}">${esc(data.status)}</span></h2>
+    <p class="ref">Reference: <strong>${esc(data.ref)}</strong></p>
+    <dl>
+      <dt>Artist</dt><dd><strong>${esc(data.artist_name || data.artist_preference || "To be assigned")}</strong></dd>
+      <dt>Appointment</dt><dd>${data.appointment_at ? `<strong>${fmt(data.appointment_at)}</strong>` : "Not yet scheduled"}</dd>
+      <dt>Placement</dt><dd>${esc(data.placement || "—")}</dd>
+      <dt>Size</dt><dd>${esc(data.size || "—")}</dd>
+      <dt>Style</dt><dd>${data.color_mode === "color" ? "Colour" : data.color_mode === "black" ? "Black / grey" : "—"}</dd>
+      <dt>Deposit</dt><dd>$${data.deposit_amount ?? "—"}
+        ${data.deposit_method_label ? ` <span style="color:#666;">via ${esc(data.deposit_method_label)}</span>` : ""}
+        ${data.deposit_paid ? " <strong>· paid ✓</strong>" : " · awaiting payment"}</dd>
+      <dt>Booked on</dt><dd>${fmtDay(data.created_at)}</dd>
+    </dl>
+    ${data.description ? `<div class="section-block"><p class="label">Tattoo description</p><p>${esc(data.description)}</p></div>` : ""}
+    ${data.receipt_url ? `<div class="section-block"><p class="label">Your receipt</p><a href="${esc(data.receipt_url)}" target="_blank" rel="noopener"><img class="receipt-thumb" src="${esc(data.receipt_url)}" alt="Receipt"></a></div>` : ""}
+  `;
+
+  const steps = [];
+  steps.push({ title:"Booking received", meta: fmtDay(data.created_at), state:"done" });
+
+  if (data.deposit_amount != null) {
+    steps.push({
+      title:"Deposit approved",
+      meta: `$${data.deposit_amount}${data.deposit_method_label ? ` via ${data.deposit_method_label}` : ""}`,
+      state:"done",
+      detail: data.deposit_paid ? null : "Awaiting your payment and receipt upload.",
+    });
+  }
+
+  if (data.deposit_paid) {
+    steps.push({ title:"Receipt verified", meta: data.deposit_paid_at ? fmtDay(data.deposit_paid_at) : "", state:"done" });
+  } else if (data.receipt_url) {
+    steps.push({ title:"Receipt under review", meta:"We received your receipt", state:"current" });
+  }
+
+  if (data.consultation_required) {
+    const cState = data.consultation_done ? "done" : data.consultation_at ? "current" : "pending";
+    steps.push({
+      title: data.consultation_done ? "Consultation complete" : data.consultation_at ? "Consultation scheduled" : "Consultation pending",
+      meta: data.consultation_at ? fmt(data.consultation_at) : "",
+      state: cState,
+      detail: [
+        data.consultation_artist_name ? `<strong>Artist:</strong> ${esc(data.consultation_artist_name)}` : "",
+        data.consultation_notes ? esc(data.consultation_notes) : "",
+      ].filter(Boolean).join("<br>"),
+    });
+  }
+
+  if (data.appointment_at) {
+    steps.push({
+      title:"Appointment scheduled",
+      meta: fmt(data.appointment_at),
+      state: data.status === "completed" ? "done" : "current",
+      detail: data.artist_name ? `<strong>Artist:</strong> ${esc(data.artist_name)}` : "",
+    });
+  } else {
+    steps.push({ title:"Appointment scheduled", meta:"We'll confirm your date soon", state:"pending" });
+  }
+
+  steps.push({
+    title:"Appointment day",
+    meta: data.appointment_at ? fmtDay(data.appointment_at) : "TBD",
+    state: data.status === "completed" ? "done" : "pending",
+    detail: data.appointment_at ? "Bring a valid photo ID and arrive well-fed." : "",
+  });
+
+  $("#timeline").innerHTML = steps.map(s => `
+    <div class="tl-item ${s.state}">
+      <p class="tl-title">${s.title}</p>
+      ${s.meta ? `<p class="tl-meta">${s.meta}</p>` : ""}
+      ${s.detail ? `<p class="tl-detail">${s.detail}</p>` : ""}
+    </div>
+  `).join("");
+})();
+</script>
+</body>
+</html>
