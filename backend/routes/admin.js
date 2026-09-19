@@ -13,11 +13,10 @@ import {
 
 const router = express.Router();
 
+// ── Auth ────────────────────────────────────────────────────
 router.post("/login", async (req, res) => {
   if (!adminConfigured()) {
-    return res.status(503).json({
-      error: "Admin credentials are not configured on the server.",
-    });
+    return res.status(503).json({ error: "Admin credentials are not configured on the server." });
   }
   const { email, password } = req.body || {};
   if (!(await verifyAdmin(email, password))) {
@@ -39,6 +38,7 @@ router.get("/me", (req, res) => {
 
 router.use(requireAdmin);
 
+// ── Bookings ────────────────────────────────────────────────
 router.get("/bookings", async (req, res, next) => {
   try {
     const { status, q } = req.query;
@@ -55,8 +55,7 @@ router.get("/bookings", async (req, res, next) => {
       FROM bookings b
       LEFT JOIN artists a ON a.id = b.artist_id
       ${clause}
-      ORDER BY b.created_at DESC
-      LIMIT 200
+      ORDER BY b.created_at DESC LIMIT 200
     `, vals);
     res.json(rows);
   } catch (err) { next(err); }
@@ -76,13 +75,84 @@ router.get("/bookings/:id", async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
+// ── Artists CRUD ────────────────────────────────────────────
+const ArtistSchema = z.object({
+  name:          z.string().min(1).max(80),
+  slug:          z.string().max(60).regex(/^[a-z0-9-]*$/).nullable().optional(),
+  specialty:     z.string().max(120).nullable().optional(),
+  bio:           z.string().max(2000).nullable().optional(),
+  image_url:     z.string().max(500).nullable().optional(),
+  portfolio_url: z.string().max(500).nullable().optional(),
+  instagram:     z.string().max(80).nullable().optional(),
+  sort_order:    z.coerce.number().int().optional(),
+  active:        z.coerce.number().int().min(0).max(1).optional(),
+});
+
 router.get("/artists", async (_req, res, next) => {
   try {
-    const { rows } = await pool.query(`SELECT * FROM artists ORDER BY name`);
+    const { rows } = await pool.query(`SELECT * FROM artists ORDER BY sort_order, name`);
     res.json(rows);
   } catch (err) { next(err); }
 });
 
+router.post("/artists", async (req, res, next) => {
+  try {
+    const p = ArtistSchema.safeParse(req.body);
+    if (!p.success) return res.status(400).json({ error: p.error.issues[0].message });
+    const d = p.data;
+    const { rows } = await pool.query(`
+      INSERT INTO artists
+        (name, slug, specialty, bio, image_url, portfolio_url, instagram, sort_order, active)
+      VALUES ($1,$2,$3,$4,$5,$6,$7,
+        COALESCE($8, (SELECT COALESCE(MAX(sort_order),0)+1 FROM artists)),
+        COALESCE($9, 1))
+      RETURNING *
+    `, [
+      d.name, d.slug ?? null, d.specialty ?? null, d.bio ?? null,
+      d.image_url ?? null, d.portfolio_url ?? null, d.instagram ?? null,
+      d.sort_order ?? null, d.active ?? null,
+    ]);
+    res.json(rows[0]);
+  } catch (err) {
+    if (err.code === "23505") return res.status(409).json({ error: "Slug already used" });
+    next(err);
+  }
+});
+
+router.patch("/artists/:id", async (req, res, next) => {
+  try {
+    const p = ArtistSchema.partial().safeParse(req.body);
+    if (!p.success) return res.status(400).json({ error: p.error.issues[0].message });
+
+    const allowed = ["name","slug","specialty","bio","image_url","portfolio_url","instagram","sort_order","active"];
+    const sets = [], vals = [];
+    for (const [k, v] of Object.entries(p.data)) {
+      if (!allowed.includes(k)) continue;
+      vals.push(v); sets.push(`${k} = $${vals.length}`);
+    }
+    if (!sets.length) return res.json({ ok: true });
+
+    vals.push(req.params.id);
+    const { rows } = await pool.query(
+      `UPDATE artists SET ${sets.join(", ")} WHERE id = $${vals.length} RETURNING *`,
+      vals
+    );
+    if (!rows[0]) return res.status(404).json({ error: "Not found" });
+    res.json(rows[0]);
+  } catch (err) {
+    if (err.code === "23505") return res.status(409).json({ error: "Slug already used" });
+    next(err);
+  }
+});
+
+router.delete("/artists/:id", async (req, res, next) => {
+  try {
+    await pool.query(`UPDATE artists SET active = 0 WHERE id = $1`, [req.params.id]);
+    res.json({ ok: true });
+  } catch (err) { next(err); }
+});
+
+// ── Payment methods CRUD ────────────────────────────────────
 const MethodSchema = z.object({
   key:          z.string().min(1).max(40).regex(/^[a-z0-9_]+$/, "lowercase letters, numbers, underscore"),
   label:        z.string().min(1).max(60),
@@ -171,6 +241,7 @@ router.post("/payment-methods/reorder", async (req, res, next) => {
   } finally { c.release(); }
 });
 
+// ── Global minimum deposit ──────────────────────────────────
 router.get("/settings/min-deposit", async (_req, res, next) => {
   try { res.json({ min_deposit_default: await getDefaultMinDeposit() }); }
   catch (err) { next(err); }
@@ -188,6 +259,7 @@ router.put("/settings/min-deposit", async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
+// ── Update booking ──────────────────────────────────────────
 const UpdateSchema = z.object({
   deposit_amount: z.coerce.number().min(0).max(100000).nullable().optional(),
   deposit_method: z.string().max(40).nullable().optional(),
@@ -196,7 +268,6 @@ const UpdateSchema = z.object({
   appointment_at: z.string().nullable().optional(),
   notes:          z.string().max(4000).nullable().optional(),
   artist_id:      z.coerce.number().int().positive().nullable().optional(),
-
   consultation_required:  z.coerce.number().int().min(0).max(1).optional(),
   consultation_done:      z.coerce.number().int().min(0).max(1).optional(),
   consultation_at:        z.string().nullable().optional(),
@@ -238,10 +309,7 @@ router.patch("/bookings/:id", async (req, res, next) => {
     if (!sets.length) return res.json({ ok: true });
 
     vals.push(req.params.id);
-    await pool.query(
-      `UPDATE bookings SET ${sets.join(", ")} WHERE id = $${vals.length}`,
-      vals
-    );
+    await pool.query(`UPDATE bookings SET ${sets.join(", ")} WHERE id = $${vals.length}`, vals);
 
     const { rows: afterRows } = await pool.query(`
       SELECT b.*, a.name AS artist_name, ca.name AS consultation_artist_name
@@ -253,15 +321,11 @@ router.patch("/bookings/:id", async (req, res, next) => {
     const after = afterRows[0];
 
     const wasPaid = before.deposit_paid === 1;
-    const isPaid  = after.deposit_paid === 1;
 
-    if (!isPaid && after.deposit_amount > 0 &&
+    if (after.deposit_paid !== 1 && after.deposit_amount > 0 &&
         (!before.deposit_amount || Number(before.deposit_amount) === 0)) {
       const method = await getPaymentMethodByKey(after.deposit_method);
-      mail.send({
-        to: after.email,
-        ...mail.tplClientDepositDue(after, after.artist_name, method),
-      });
+      mail.send({ to: after.email, ...mail.tplClientDepositDue(after, after.artist_name, method) });
     }
 
     const consultationChanged =
@@ -269,55 +333,39 @@ router.patch("/bookings/:id", async (req, res, next) => {
       after.consultation_artist_id !== before.consultation_artist_id ||
       after.consultation_required !== before.consultation_required;
     if (consultationChanged && after.consultation_required === 1 && after.consultation_at) {
-      mail.send({
-        to: after.email,
-        ...mail.tplClientStatusUpdate(after, after.artist_name, after.consultation_artist_name),
-      });
+      mail.send({ to: after.email, ...mail.tplClientStatusUpdate(after, after.artist_name, after.consultation_artist_name) });
     }
 
     if (before.consultation_done !== 1 && after.consultation_done === 1) {
-      mail.send({
-        to: after.email,
-        ...mail.tplClientStatusUpdate(after, after.artist_name, after.consultation_artist_name),
-      });
+      mail.send({ to: after.email, ...mail.tplClientStatusUpdate(after, after.artist_name, after.consultation_artist_name) });
     }
 
     if (after.appointment_at && after.appointment_at !== before.appointment_at && wasPaid) {
-      mail.send({
-        to: after.email,
-        ...mail.tplClientStatusUpdate(after, after.artist_name, after.consultation_artist_name),
-      });
+      mail.send({ to: after.email, ...mail.tplClientStatusUpdate(after, after.artist_name, after.consultation_artist_name) });
     }
 
     res.json(after);
   } catch (err) { next(err); }
 });
 
+// ── Receipt approve / reject ────────────────────────────────
 router.post("/receipts/:id/approve", async (req, res, next) => {
   try {
-    const { rows } = await pool.query(
-      `SELECT * FROM receipts WHERE id = $1`, [req.params.id]
-    );
+    const { rows } = await pool.query(`SELECT * FROM receipts WHERE id = $1`, [req.params.id]);
     const r = rows[0];
     if (!r) return res.status(404).json({ error: "Not found" });
 
-    await pool.query(
-      `UPDATE receipts SET status='approved', reviewed_at=NOW() WHERE id=$1`,
-      [r.id]
-    );
+    await pool.query(`UPDATE receipts SET status='approved', reviewed_at=NOW() WHERE id=$1`, [r.id]);
     await pool.query(
       `UPDATE bookings SET deposit_paid=1, deposit_paid_at=NOW(), status='approved' WHERE id=$1`,
       [r.booking_id]
     );
 
     const { rows: bk } = await pool.query(`
-      SELECT b.*, a.name AS artist_name
-      FROM bookings b LEFT JOIN artists a ON a.id = b.artist_id
-      WHERE b.id = $1
+      SELECT b.*, a.name AS artist_name FROM bookings b
+      LEFT JOIN artists a ON a.id = b.artist_id WHERE b.id = $1
     `, [r.booking_id]);
-    if (bk[0]) {
-      mail.send({ to: bk[0].email, ...mail.tplClientConfirmedFull(bk[0], bk[0].artist_name) });
-    }
+    if (bk[0]) mail.send({ to: bk[0].email, ...mail.tplClientConfirmedFull(bk[0], bk[0].artist_name) });
 
     res.json({ ok: true });
   } catch (err) { next(err); }
@@ -326,9 +374,7 @@ router.post("/receipts/:id/approve", async (req, res, next) => {
 router.post("/receipts/:id/reject", async (req, res, next) => {
   try {
     const reason = String(req.body?.reason || "").slice(0, 500);
-    const { rows } = await pool.query(
-      `SELECT * FROM receipts WHERE id = $1`, [req.params.id]
-    );
+    const { rows } = await pool.query(`SELECT * FROM receipts WHERE id = $1`, [req.params.id]);
     const r = rows[0];
     if (!r) return res.status(404).json({ error: "Not found" });
 
@@ -338,9 +384,7 @@ router.post("/receipts/:id/reject", async (req, res, next) => {
     );
 
     const { rows: bk } = await pool.query(`SELECT * FROM bookings WHERE id = $1`, [r.booking_id]);
-    if (bk[0]) {
-      mail.send({ to: bk[0].email, ...mail.tplClientReceiptRejected(bk[0], reason) });
-    }
+    if (bk[0]) mail.send({ to: bk[0].email, ...mail.tplClientReceiptRejected(bk[0], reason) });
 
     res.json({ ok: true });
   } catch (err) { next(err); }
